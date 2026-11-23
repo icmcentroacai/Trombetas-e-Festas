@@ -68,9 +68,9 @@
     <!-- MAIN APP WRAPPER -->
     <div id="app" class="min-h-full flex flex-col">
         
-        <!-- ================= AUTHENTICATION VIEW ================= -->
+        <!-- ================= AUTHENTICATION VIEW (UNIFIED CPF LOGIN / FIRST ACCESS) ================= -->
         <div id="auth-view" class="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-white/10">
+            <div class="max-w-md w-full space-y-6 bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-white/10">
                 <div class="text-center">
                     <div class="mx-auto h-16 w-16 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/50 mb-4">
                         <i class="fa-solid fa-church text-white text-2xl"></i>
@@ -83,99 +83,79 @@
                     </div>
                 </div>
 
-                <!-- Tabs: Login / Register -->
-                <div class="flex rounded-xl bg-slate-800/80 p-1 border border-slate-700">
-                    <button onclick="switchAuthTab('login')" id="tab-login-btn" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white bg-brand-600 shadow transition-all">Entrar</button>
-                    <button onclick="switchAuthTab('register')" id="tab-register-btn" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-300 hover:text-white transition-all">Cadastrar</button>
-                </div>
+                <!-- UNIFIED AUTH FORM (CPF ABOVE NAME, NO TABS) -->
+                <form id="unified-auth-form" class="mt-6 space-y-4" onsubmit="handleUnifiedAuth(event)">
+                    <!-- 1. CAMPO CPF (ACIMA DO CAMPO NOME) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="auth-cpf" class="block text-xs font-semibold uppercase tracking-wider text-slate-300">CPF</label>
+                            <span id="auth-cpf-status-pill" class="text-[11px] font-medium text-slate-400">Digite os 11 dígitos</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-id-card"></i></span>
+                            <input id="auth-cpf" name="cpf" type="text" inputmode="numeric" maxlength="14" required oninput="handleAuthCpfInput(this)" class="block w-full pl-10 pr-3 py-3 bg-slate-800/60 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm tracking-wide" placeholder="000.000.000-00">
+                        </div>
+                    </div>
 
-                <!-- LOGIN FORM -->
-                <form id="login-form" class="mt-8 space-y-6" onsubmit="handleLogin(event)">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nome de Usuário</label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-user"></i></span>
-                                <input id="login-username" name="username" type="text" required oninput="updateLoginChurchDisplay()" class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm" placeholder="Ex: membro1">
+                    <!-- 2. CAMPO NOME (AUTOMÁTICO SE JÁ CADASTRADO / OBRIGATÓRIO SE PRIMEIRA VEZ) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="auth-name" class="block text-xs font-semibold uppercase tracking-wider text-slate-300">Nome Completo</label>
+                            <span id="auth-name-hint" class="text-[11px] text-slate-400">Preenchido após o CPF</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-user"></i></span>
+                            <input id="auth-name" name="name" type="text" required oninput="validateUnifiedNameUniqueness()" class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm" placeholder="Informe seu CPF acima primeiro...">
+                        </div>
+                    </div>
+
+                    <!-- 3. IGREJA E GRUPO (EXIBIÇÃO AUTOMÁTICA SE CADASTRADO / SELEÇÃO SE PRIMEIRA VEZ) -->
+                    <div id="auth-existing-church-box" class="hidden">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Igreja / Grupo Vinculado</label>
+                        <div class="relative select-none pointer-events-none">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-indigo-300"><i class="fa-solid fa-church"></i></span>
+                            <input id="auth-igreja-display" type="text" readonly tabindex="-1" value="" class="block w-full pl-10 pr-3 py-3 bg-indigo-950/60 border border-brand-500/40 rounded-xl text-indigo-100 font-semibold text-sm cursor-default focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div id="auth-first-access-fields" class="hidden space-y-4 pt-1">
+                        <div class="px-3.5 py-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-xs flex items-start space-x-2">
+                            <i class="fa-solid fa-sparkles mt-0.5 text-amber-300"></i>
+                            <span><strong>Primeiro acesso detectado!</strong> Digite seu nome acima e confirme sua Igreja e Grupo para entrar.</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="auth-igreja" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Igreja</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-church"></i></span>
+                                    <select id="auth-igreja" name="igreja" onchange="populateUnifiedGroupSelect()" class="block w-full pl-9 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+                                        <option value="c_sede">Igreja Sede</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="auth-grupo" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Grupo</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-people-group"></i></span>
+                                    <select id="auth-grupo" name="grupo" class="block w-full pl-9 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+                                        <option value="Grupo 1">Grupo 1</option>
+                                        <option value="Grupo 2">Grupo 2</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Senha</label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
-                                <input id="login-password" name="password" type="password" required class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm" placeholder="••••••••">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Igreja</label>
-                            <div class="relative select-none pointer-events-none">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-church"></i></span>
-                                <input id="login-igreja-display" type="text" readonly tabindex="-1" value="Preencha o nome de usuário..." class="block w-full pl-10 pr-3 py-3 bg-slate-800/40 border border-slate-700/80 rounded-xl text-slate-400 text-sm cursor-default focus:outline-none">
-                            </div>
-                        </div>
                     </div>
 
-                    <div>
-                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-brand-600/30 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all">
-                            Acessar Sistema
-                        </button>
-                    </div>
-
-                    <!-- Quick Credentials Hint -->
-                    <div class="mt-4 pt-4 border-t border-slate-700/60 text-xs text-slate-400 space-y-1">
-                        <p class="font-semibold text-slate-300">Contas de Acesso Rápido (Senha: <code class="text-brand-400">123</code>):</p>
-                        <div class="grid grid-cols-2 gap-1 mt-1">
-                            <span class="cursor-pointer hover:text-white" onclick="fillCreds('admin', '123')">• Admin Geral: <code class="text-indigo-300">admin</code></span>
-                            <span class="cursor-pointer hover:text-white" onclick="fillCreds('adm1', '123')">• Admin G1: <code class="text-indigo-300">adm1</code></span>
-                            <span class="cursor-pointer hover:text-white" onclick="fillCreds('adm2', '123')">• Admin G2: <code class="text-indigo-300">adm2</code></span>
-                            <span class="cursor-pointer hover:text-white" onclick="fillCreds('membro1', '123')">• Membro G1: <code class="text-indigo-300">membro1</code></span>
-                        </div>
-                    </div>
-                </form>
-
-                <!-- REGISTER FORM -->
-                <form id="register-form" class="mt-8 space-y-5 hidden" onsubmit="handleRegister(event)">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nome de Usuário</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-user-plus"></i></span>
-                            <input id="reg-username" name="username" type="text" required class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm" placeholder="Seu nome de usuário">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Senha</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
-                            <input id="reg-password" name="password" type="password" required class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm" placeholder="Sua senha">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Selecione a Igreja</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-church"></i></span>
-                            <select id="reg-igreja" name="igreja" onchange="populateRegisterGroupSelect()" class="block w-full pl-10 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
-                                <option value="c_sede">Igreja Sede</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Selecione o Grupo</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-people-group"></i></span>
-                            <select id="reg-grupo" name="grupo" class="block w-full pl-10 pr-3 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
-                                <option value="Grupo 1">Grupo 1</option>
-                                <option value="Grupo 2">Grupo 2</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-brand-600/30 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all">
-                            Criar Conta de Membro
-                        </button>
-                    </div>
-                    <p id="register-username-warning" class="hidden text-xs font-semibold text-rose-300 bg-rose-500/20 border border-rose-400/30 rounded-xl px-3.5 py-2.5 text-center">
-                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Este nome de usuário já está em uso no sistema. Escolha outro nome.
+                    <p id="auth-name-warning" class="hidden text-xs font-semibold text-rose-300 bg-rose-500/20 border border-rose-400/30 rounded-xl px-3.5 py-2.5 text-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Este nome já está cadastrado em outro CPF. Informe seu nome completo.
                     </p>
+
+                    <div class="pt-1">
+                        <button id="auth-submit-btn" type="submit" class="w-full flex items-center justify-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-brand-600/30 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span id="auth-submit-text">Continuar</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -415,6 +395,45 @@
             }
         });
 
+        // --- ROLE & MEMBER FUNCTION HELPERS ---
+        const MEMBER_SPECIAL_ROLES = ['obreiro', 'secretario', 'respo_assistente'];
+
+        function getMemberFunctionLabel(role) {
+            switch (role) {
+                case 'admin_geral':
+                    return 'Admin Geral';
+                case 'admin_grupo':
+                    return 'Admin de Grupo';
+                case 'obreiro':
+                    return 'Obreiro';
+                case 'secretario':
+                    return 'Secretário(a)';
+                case 'respo_assistente':
+                    return 'Respo Assistente';
+                case 'membro':
+                default:
+                    return 'Membro';
+            }
+        }
+
+        function isMemberWithSpecialFunction(role) {
+            return MEMBER_SPECIAL_ROLES.includes(role);
+        }
+
+        function isRegularMemberOrFunctionRole(role) {
+            return role === 'membro' || MEMBER_SPECIAL_ROLES.includes(role);
+        }
+
+        function canManageGroupMembersAndGuests(user = db.session) {
+            if (!user) return false;
+            return user.role === 'admin_geral' || user.role === 'admin_grupo' || isMemberWithSpecialFunction(user.role);
+        }
+
+        function canAssignMemberFunctions(user = db.session) {
+            if (!user) return false;
+            return user.role === 'admin_geral' || user.role === 'admin_grupo';
+        }
+
         // --- INITIAL STATE & LOCAL STORAGE + FIRESTORE ---
         const STORAGE_KEYS = {
             USERS: 'ekklesia_users_v3',
@@ -465,10 +484,7 @@
                 db.churches = data.churches;
             }
             if (Array.isArray(data.users) && data.users.length > 0) {
-                db.users = data.users.map(u => ({
-                    ...u,
-                    churchId: u.churchId || DEFAULT_CHURCH_ID
-                }));
+                db.users = data.users.map(normalizeUserFields);
             }
             if (Array.isArray(data.events)) {
                 db.events = data.events.map(ev => ({
@@ -493,10 +509,7 @@
             if (db.session) {
                 const updatedSessionUser = db.users.find(u => u.id === db.session.id);
                 if (updatedSessionUser) {
-                    db.session = {
-                        ...updatedSessionUser,
-                        churchId: updatedSessionUser.churchId || DEFAULT_CHURCH_ID
-                    };
+                    db.session = normalizeUserFields({ ...updatedSessionUser });
                 }
             }
         }
@@ -570,13 +583,13 @@
         ];
 
         const DEFAULT_USERS = [
-            { id: 'u1', username: 'admin', password: '123', role: 'admin_geral', churchId: DEFAULT_CHURCH_ID, grupo: 'Geral' },
-            { id: 'u2', username: 'adm1', password: '123', role: 'admin_grupo', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
-            { id: 'u3', username: 'adm2', password: '123', role: 'admin_grupo', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' },
-            { id: 'u4', username: 'membro1', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
-            { id: 'u5', username: 'membro2', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' },
-            { id: 'u6', username: 'joao_g1', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
-            { id: 'u7', username: 'maria_g2', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' }
+            { id: 'u1', cpf: '11111111111', username: 'admin', password: '123', role: 'admin_geral', churchId: DEFAULT_CHURCH_ID, grupo: 'Geral' },
+            { id: 'u2', cpf: '22222222222', username: 'adm1', password: '123', role: 'admin_grupo', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
+            { id: 'u3', cpf: '33333333333', username: 'adm2', password: '123', role: 'admin_grupo', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' },
+            { id: 'u4', cpf: '44444444444', username: 'membro1', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
+            { id: 'u5', cpf: '55555555555', username: 'membro2', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' },
+            { id: 'u6', cpf: '66666666666', username: 'joao_g1', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 1' },
+            { id: 'u7', cpf: '77777777777', username: 'maria_g2', password: '123', role: 'membro', churchId: DEFAULT_CHURCH_ID, grupo: 'Grupo 2' }
         ];
 
         const DEFAULT_EVENTS = [
@@ -591,6 +604,28 @@
             { id: 'g4', churchId: DEFAULT_CHURCH_ID, memberId: 'u5', memberName: 'membro2', grupo: 'Grupo 2', name: 'Juliana Lima', obs: 'Amiga da escola', rsvp: 'Confirmado', attended: true, acceptsVisit: 'Sim', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Presente' },
             { id: 'g5', churchId: DEFAULT_CHURCH_ID, memberId: 'u7', memberName: 'maria_g2', grupo: 'Grupo 2', name: 'Marcos Paulo', obs: 'Convidado para o louvor', rsvp: 'Confirmado', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Confirmado' }
         ];
+
+        // --- CPF HELPERS ---
+        function cleanCpf(value) {
+            return String(value || '').replace(/\D/g, '').slice(0, 11);
+        }
+
+        function formatCpf(value) {
+            const digits = cleanCpf(value);
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+            if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+            return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        }
+
+        function normalizeUserFields(u) {
+            const defaultMatch = DEFAULT_USERS.find(du => du.id === u.id || du.username.toLowerCase() === (u.username || '').toLowerCase());
+            return {
+                ...u,
+                cpf: cleanCpf(u.cpf || (defaultMatch ? defaultMatch.cpf : '')),
+                churchId: u.churchId || DEFAULT_CHURCH_ID
+            };
+        }
 
         // --- APP DATA STORE ---
         let db = {
@@ -724,10 +759,7 @@
             }
 
             db.churches = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHURCHES)) || DEFAULT_CHURCHES;
-            db.users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)).map(u => ({
-                ...u,
-                churchId: u.churchId || DEFAULT_CHURCH_ID
-            }));
+            db.users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)).map(normalizeUserFields);
             db.events = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS)).map(ev => ({
                 ...ev,
                 churchId: ev.churchId || DEFAULT_CHURCH_ID,
@@ -745,8 +777,7 @@
 
             const savedSession = localStorage.getItem(STORAGE_KEYS.SESSION);
             if (savedSession) {
-                db.session = JSON.parse(savedSession);
-                if (!db.session.churchId) db.session.churchId = DEFAULT_CHURCH_ID;
+                db.session = normalizeUserFields(JSON.parse(savedSession));
             }
         }
 
@@ -845,63 +876,23 @@
             }, 3500);
         }
 
-        // --- AUTH CONTROLS ---
-        function populateAuthChurchSelects() {
+        // --- UNIFIED CPF AUTH & FIRST ACCESS CONTROLS ---
+        function populateUnifiedAuthChurchSelects() {
             const churches = db.churches.length > 0 ? db.churches : DEFAULT_CHURCHES;
-
-            const regChurchSelect = document.getElementById('reg-igreja');
-            if (regChurchSelect) {
-                const prevRegChurch = regChurchSelect.value;
-                regChurchSelect.innerHTML = churches.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                if (churches.some(c => c.id === prevRegChurch)) {
-                    regChurchSelect.value = prevRegChurch;
+            const authChurchSelect = document.getElementById('auth-igreja');
+            if (authChurchSelect) {
+                const prevChurch = authChurchSelect.value;
+                authChurchSelect.innerHTML = churches.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                if (churches.some(c => c.id === prevChurch)) {
+                    authChurchSelect.value = prevChurch;
                 }
-                populateRegisterGroupSelect();
+                populateUnifiedGroupSelect();
             }
-
-            updateLoginChurchDisplay();
         }
 
-        function updateLoginChurchDisplay() {
-            const usernameInput = document.getElementById('login-username');
-            const churchDisplayInput = document.getElementById('login-igreja-display');
-            if (!usernameInput || !churchDisplayInput) return;
-
-            const typedUsername = usernameInput.value.trim().toLowerCase();
-
-            if (!typedUsername) {
-                churchDisplayInput.value = 'Preencha o nome de usuário...';
-                churchDisplayInput.className = 'block w-full pl-10 pr-3 py-3 bg-slate-800/40 border border-slate-700/80 rounded-xl text-slate-400 text-sm cursor-default focus:outline-none';
-                updateAuthNextEventBanner(DEFAULT_CHURCH_ID);
-                return;
-            }
-
-            const matchedUser = db.users.find(u => u.username.trim().toLowerCase() === typedUsername);
-
-            if (!matchedUser) {
-                churchDisplayInput.value = 'Usuário não encontrado';
-                churchDisplayInput.className = 'block w-full pl-10 pr-3 py-3 bg-slate-800/40 border border-slate-700/80 rounded-xl text-slate-400 italic text-sm cursor-default focus:outline-none';
-                updateAuthNextEventBanner(DEFAULT_CHURCH_ID);
-                return;
-            }
-
-            if (matchedUser.role === 'admin_geral') {
-                const defaultChurch = getChurchById(matchedUser.churchId || DEFAULT_CHURCH_ID) || db.churches[0] || DEFAULT_CHURCHES[0];
-                churchDisplayInput.value = `Todas as Igrejas (${defaultChurch.name})`;
-                churchDisplayInput.className = 'block w-full pl-10 pr-3 py-3 bg-indigo-950/60 border border-brand-500/40 rounded-xl text-indigo-200 font-semibold text-sm cursor-default focus:outline-none';
-                updateAuthNextEventBanner(defaultChurch.id);
-                return;
-            }
-
-            const userChurch = getChurchById(matchedUser.churchId || DEFAULT_CHURCH_ID) || db.churches[0] || DEFAULT_CHURCHES[0];
-            churchDisplayInput.value = userChurch.name;
-            churchDisplayInput.className = 'block w-full pl-10 pr-3 py-3 bg-indigo-950/60 border border-brand-500/40 rounded-xl text-white font-semibold text-sm cursor-default focus:outline-none';
-            updateAuthNextEventBanner(userChurch.id);
-        }
-
-        function populateRegisterGroupSelect() {
-            const churchSelect = document.getElementById('reg-igreja');
-            const groupSelect = document.getElementById('reg-grupo');
+        function populateUnifiedGroupSelect() {
+            const churchSelect = document.getElementById('auth-igreja');
+            const groupSelect = document.getElementById('auth-grupo');
             if (!churchSelect || !groupSelect) return;
 
             const selectedChurchId = churchSelect.value;
@@ -911,112 +902,210 @@
                 : [];
 
             if (groups.length === 0) {
-                groupSelect.innerHTML = `<option value="">Nenhum grupo cadastrado nesta igreja</option>`;
+                groupSelect.innerHTML = `<option value="">Nenhum grupo cadastrado</option>`;
             } else {
                 groupSelect.innerHTML = groups.map(g => `<option value="${g}">${g}</option>`).join('');
             }
         }
 
-        function switchAuthTab(tab) {
-            const loginForm = document.getElementById('login-form');
-            const registerForm = document.getElementById('register-form');
-            const loginBtn = document.getElementById('tab-login-btn');
-            const registerBtn = document.getElementById('tab-register-btn');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-                loginBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-white bg-brand-600 shadow transition-all";
-                registerBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-300 hover:text-white transition-all";
-                updateLoginChurchDisplay();
-            } else {
-                populateAuthChurchSelects();
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                registerBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-white bg-brand-600 shadow transition-all";
-                loginBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-300 hover:text-white transition-all";
-            }
+        function findUserByCpf(rawCpf) {
+            const digits = cleanCpf(rawCpf);
+            if (digits.length !== 11) return null;
+            return db.users.find(u => cleanCpf(u.cpf) === digits) || null;
         }
 
-        function fillCreds(user, pass) {
-            document.getElementById('login-username').value = user;
-            document.getElementById('login-password').value = pass;
-            updateLoginChurchDisplay();
+        function handleAuthCpfInput(inputEl) {
+            const formatted = formatCpf(inputEl.value);
+            inputEl.value = formatted;
+            syncUnifiedAuthStateByCpf();
         }
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+        function syncUnifiedAuthStateByCpf() {
+            const cpfInput = document.getElementById('auth-cpf');
+            const nameInput = document.getElementById('auth-name');
+            const statusPill = document.getElementById('auth-cpf-status-pill');
+            const nameHint = document.getElementById('auth-name-hint');
+            const existingChurchBox = document.getElementById('auth-existing-church-box');
+            const churchDisplay = document.getElementById('auth-igreja-display');
+            const firstAccessFields = document.getElementById('auth-first-access-fields');
+            const submitText = document.getElementById('auth-submit-text');
+            const warningEl = document.getElementById('auth-name-warning');
 
-            const user = db.users.find(u =>
-                u.username.trim().toLowerCase() === username.toLowerCase() &&
-                u.password === password
-            );
+            if (!cpfInput || !nameInput) return;
 
-            if (!user) {
-                showToast('Usuário ou senha inválidos!', 'error');
-                return;
-            }
-
-            db.session = user;
-            db.activeChurchId = user.churchId || (db.churches[0] && db.churches[0].id) || DEFAULT_CHURCH_ID;
-            saveDB();
-            showToast(`Bem-vindo de volta, ${user.username}!`, 'success');
-            renderApp();
-        }
-
-        function handleRegister(e) {
-            e.preventDefault();
-            const username = document.getElementById('reg-username').value.trim();
-            const password = document.getElementById('reg-password').value.trim();
-            const churchId = document.getElementById('reg-igreja').value;
-            const grupo = document.getElementById('reg-grupo').value;
-
-            if (!churchId) {
-                showToast('Selecione uma igreja para concluir o cadastro.', 'error');
-                return;
-            }
-            if (!grupo) {
-                showToast('Selecione um grupo válido da igreja escolhida.', 'error');
-                return;
-            }
-
-            const warningEl = document.getElementById('register-username-warning');
-            const usernameExistsInSystem = db.users.some(u =>
-                u.username.trim().toLowerCase() === username.toLowerCase()
-            );
-            if (usernameExistsInSystem) {
-                if (warningEl) warningEl.classList.remove('hidden');
-                showToast('Este nome de usuário já está em uso no sistema. Escolha outro nome.', 'error');
-                document.getElementById('reg-username').focus();
-                return;
-            }
+            const digits = cleanCpf(cpfInput.value);
             if (warningEl) warningEl.classList.add('hidden');
+
+            if (digits.length < 11) {
+                statusPill.textContent = `${digits.length}/11 dígitos`;
+                statusPill.className = 'text-[11px] font-medium text-slate-400';
+
+                nameInput.readOnly = false;
+                nameInput.className = 'block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm';
+                nameInput.placeholder = 'Informe seu CPF acima primeiro...';
+                nameHint.textContent = 'Aguardando CPF';
+                nameHint.className = 'text-[11px] text-slate-400';
+
+                existingChurchBox.classList.add('hidden');
+                firstAccessFields.classList.add('hidden');
+                submitText.textContent = 'Continuar';
+                updateAuthNextEventBanner(DEFAULT_CHURCH_ID);
+                return;
+            }
+
+            const existingUser = findUserByCpf(digits);
+
+            if (existingUser) {
+                // CPF JÁ CADASTRADO -> NOME AUTOMÁTICO E BLOQUEADO
+                statusPill.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>CPF cadastrado';
+                statusPill.className = 'text-[11px] font-semibold text-emerald-300';
+
+                nameInput.value = existingUser.username;
+                nameInput.readOnly = true;
+                nameInput.className = 'block w-full pl-10 pr-3 py-3 bg-indigo-950/60 border border-emerald-500/40 rounded-xl text-white font-semibold text-sm cursor-default focus:outline-none';
+                nameHint.innerHTML = '<i class="fa-solid fa-lock mr-1"></i>Preenchido automaticamente';
+                nameHint.className = 'text-[11px] font-medium text-emerald-300';
+
+                firstAccessFields.classList.add('hidden');
+                existingChurchBox.classList.remove('hidden');
+
+                const userChurch = getChurchById(existingUser.churchId || DEFAULT_CHURCH_ID) || db.churches[0] || DEFAULT_CHURCHES[0];
+                if (existingUser.role === 'admin_geral') {
+                    churchDisplay.value = `Todas as Igrejas (${userChurch.name}) • Admin Geral`;
+                } else {
+                    churchDisplay.value = `${userChurch.name} • ${existingUser.grupo}`;
+                }
+
+                submitText.textContent = `Entrar como ${existingUser.username}`;
+                updateAuthNextEventBanner(userChurch.id);
+            } else {
+                // PRIMEIRA VEZ NO SITE -> HABILITA CAMPO NOME E SELEÇÃO DE IGREJA/GRUPO
+                statusPill.innerHTML = '<i class="fa-solid fa-user-plus mr-1"></i>Primeiro acesso';
+                statusPill.className = 'text-[11px] font-semibold text-amber-300';
+
+                if (nameInput.readOnly) {
+                    nameInput.value = '';
+                }
+                nameInput.readOnly = false;
+                nameInput.className = 'block w-full pl-10 pr-3 py-3 bg-slate-800/70 border border-amber-400/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm';
+                nameInput.placeholder = 'Digite seu nome completo para cadastrar';
+                nameHint.textContent = 'Obrigatório no 1º acesso';
+                nameHint.className = 'text-[11px] font-semibold text-amber-300';
+
+                existingChurchBox.classList.add('hidden');
+                firstAccessFields.classList.remove('hidden');
+                populateUnifiedAuthChurchSelects();
+
+                submitText.textContent = 'Cadastrar e Acessar Sistema';
+                const selectedChurchId = document.getElementById('auth-igreja')?.value || DEFAULT_CHURCH_ID;
+                updateAuthNextEventBanner(selectedChurchId);
+            }
+        }
+
+        function validateUnifiedNameUniqueness() {
+            const cpfDigits = cleanCpf(document.getElementById('auth-cpf')?.value);
+            const nameInput = document.getElementById('auth-name');
+            const warningEl = document.getElementById('auth-name-warning');
+            if (!nameInput || !warningEl) return true;
+
+            if (cpfDigits.length === 11 && findUserByCpf(cpfDigits)) {
+                warningEl.classList.add('hidden');
+                return true;
+            }
+
+            const typedName = nameInput.value.trim().toLowerCase();
+            if (!typedName) {
+                warningEl.classList.add('hidden');
+                return true;
+            }
+
+            const duplicate = db.users.some(u => u.username.trim().toLowerCase() === typedName);
+            if (duplicate) {
+                warningEl.classList.remove('hidden');
+                return false;
+            }
+
+            warningEl.classList.add('hidden');
+            return true;
+        }
+
+        function fillCpfCreds(cpfFormatted) {
+            const cpfInput = document.getElementById('auth-cpf');
+            if (!cpfInput) return;
+            cpfInput.value = formatCpf(cpfFormatted);
+            syncUnifiedAuthStateByCpf();
+        }
+
+        function handleUnifiedAuth(e) {
+            e.preventDefault();
+            const cpfInput = document.getElementById('auth-cpf');
+            const nameInput = document.getElementById('auth-name');
+            const cpfDigits = cleanCpf(cpfInput.value);
+
+            if (cpfDigits.length !== 11) {
+                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+                cpfInput.focus();
+                return;
+            }
+
+            const existingUser = findUserByCpf(cpfDigits);
+
+            // CASO 1: CPF JÁ CADASTRADO -> LOGIN AUTOMÁTICO
+            if (existingUser) {
+                db.session = existingUser;
+                db.activeChurchId = existingUser.churchId || (db.churches[0] && db.churches[0].id) || DEFAULT_CHURCH_ID;
+                saveDB();
+                showToast(`Bem-vindo de volta, ${existingUser.username}!`, 'success');
+                renderApp();
+                return;
+            }
+
+            // CASO 2: PRIMEIRA VEZ NO SITE -> CADASTRO E LOGIN AUTOMÁTICO
+            const fullName = nameInput.value.trim();
+            if (!fullName) {
+                showToast('Por favor, preencha seu nome para concluir o primeiro acesso.', 'error');
+                nameInput.focus();
+                return;
+            }
+
+            if (!validateUnifiedNameUniqueness()) {
+                showToast('Este nome já está cadastrado em outro CPF. Informe seu nome completo.', 'error');
+                nameInput.focus();
+                return;
+            }
+
+            const churchId = document.getElementById('auth-igreja')?.value || DEFAULT_CHURCH_ID;
+            const grupo = document.getElementById('auth-grupo')?.value || 'Grupo 1';
+
+            if (!churchId || !grupo) {
+                showToast('Selecione uma igreja e um grupo válidos para continuar.', 'error');
+                return;
+            }
 
             const newUser = {
                 id: 'u_' + Date.now(),
-                username,
-                password,
+                cpf: cpfDigits,
+                username: fullName,
+                password: '123',
                 role: 'membro',
                 churchId,
                 grupo
             };
 
             db.users.push(newUser);
+            db.session = newUser;
+            db.activeChurchId = churchId;
             saveDB();
-            showToast('Cadastro realizado com sucesso! Faça login.', 'success');
-            switchAuthTab('login');
-            document.getElementById('login-username').value = username;
-            updateLoginChurchDisplay();
-            document.getElementById('register-form').reset();
-            populateAuthChurchSelects();
+            showToast(`Cadastro realizado! Bem-vindo(a), ${newUser.username}!`, 'success');
+            renderApp();
         }
 
         function handleLogout() {
             db.session = null;
             isMobileSidebarOpen = false;
             persistToLocalStorageOnly();
+            const form = document.getElementById('unified-auth-form');
+            if (form) form.reset();
             showToast('Sessão encerrada com sucesso.', 'info');
             renderApp();
         }
@@ -1059,12 +1148,13 @@
             const authView = document.getElementById('auth-view');
             const mainAppView = document.getElementById('main-app-view');
 
-            populateAuthChurchSelects();
+            populateUnifiedAuthChurchSelects();
             updateAuthNextEventBanner();
 
             if (!db.session) {
                 authView.classList.remove('hidden');
                 mainAppView.classList.add('hidden');
+                syncUnifiedAuthStateByCpf();
                 return;
             }
 
@@ -1102,7 +1192,7 @@
             const roleBadge = document.getElementById('user-role-badge');
             if (db.session.role === 'admin_geral') roleBadge.textContent = 'Admin Geral';
             else if (db.session.role === 'admin_grupo') roleBadge.textContent = `Admin (${db.session.grupo})`;
-            else roleBadge.textContent = `Membro (${db.session.grupo})`;
+            else roleBadge.textContent = `${getMemberFunctionLabel(db.session.role)} (${db.session.grupo})`;
 
             // Active Event Name (Scoped strictly to the current church)
             const activeEvent = getActiveChurchEvent(currentChurch.id);
@@ -1126,9 +1216,12 @@
             const collapsedDesktop = isDesktopViewport() && isSidebarCollapsed;
 
             let links = [];
-            if (db.session.role === 'membro') {
+            if (isRegularMemberOrFunctionRole(db.session.role)) {
                 links = [
                     { id: 'meus-convidados', label: 'Meus Convidados', icon: 'fa-address-book' },
+                    ...(isMemberWithSpecialFunction(db.session.role)
+                        ? [{ id: 'convidados-membro', label: 'Convidados por Membro', icon: 'fa-list-check' }]
+                        : []),
                     { id: 'dashboard-grupo', label: 'Dashboard do Grupo', icon: 'fa-chart-pie' },
                     { id: 'membros-grupo', label: 'Membros do Grupo', icon: 'fa-users' }
                 ];
@@ -1580,7 +1673,7 @@
             const churchId = getCurrentChurchId();
             const currentChurch = getCurrentChurch();
             const grupoName = db.session.grupo;
-            const groupMembers = getChurchUsers(churchId).filter(u => u.grupo === grupoName && u.role === 'membro');
+            const groupMembers = getChurchUsers(churchId).filter(u => u.grupo === grupoName && isRegularMemberOrFunctionRole(u.role));
             const groupGuests = getChurchGuests(churchId).filter(g => g.grupo === grupoName);
             const activeEvent = getActiveChurchEvent(churchId);
 
@@ -1688,11 +1781,50 @@
             renderContent();
         }
 
+        function updateMemberFunctionByGroupAdmin(memberId, newFunctionRole) {
+            if (!canAssignMemberFunctions()) {
+                showToast('Apenas Admin de Grupo ou Admin Geral podem definir funções nos membros.', 'error');
+                renderContent();
+                return;
+            }
+
+            const allowedMemberFunctions = ['membro', 'obreiro', 'secretario', 'respo_assistente'];
+            if (!allowedMemberFunctions.includes(newFunctionRole)) {
+                showToast('Função selecionada inválida.', 'error');
+                renderContent();
+                return;
+            }
+
+            const churchId = getCurrentChurchId();
+            const member = getChurchUsers(churchId).find(u => u.id === memberId);
+            if (!member) return;
+
+            if (db.session.role === 'admin_grupo') {
+                if (member.grupo !== db.session.grupo || member.role === 'admin_geral' || member.role === 'admin_grupo') {
+                    showToast('Você só pode alterar a função de membros do seu próprio grupo.', 'error');
+                    renderContent();
+                    return;
+                }
+            }
+
+            member.role = newFunctionRole;
+            if (db.session && db.session.id === member.id) {
+                db.session = normalizeUserFields({ ...member });
+            }
+
+            saveDB();
+            showToast(`Função de ${member.username} atualizada para ${getMemberFunctionLabel(newFunctionRole)}!`);
+            renderApp();
+        }
+
         function renderMembrosGrupo(container) {
             const churchId = getCurrentChurchId();
             const currentChurch = getCurrentChurch();
             const isAdminGeral = db.session.role === 'admin_geral';
-            const canManageMembers = db.session.role === 'admin_grupo' || isAdminGeral;
+            const canConfirmAttendance = db.session.role === 'admin_grupo' || isAdminGeral;
+            const canDeleteMembers = db.session.role === 'admin_grupo' || isAdminGeral;
+            const canManageMembers = canManageGroupMembersAndGuests(db.session);
+            const canSetFunction = canAssignMemberFunctions(db.session);
             const churchGroups = getChurchGroups(churchId);
 
             if (isAdminGeral) {
@@ -1711,9 +1843,11 @@
                         <div>
                             <h3 class="text-lg font-bold text-slate-800">Membros Integrantes ${grupoTarget ? `do ${grupoTarget}` : ''} (${currentChurch.name})</h3>
                             <p class="text-sm text-slate-500">
-                                ${canManageMembers
-                                    ? 'Visualize os membros cadastrados nesta igreja e confirme quem compareceu ao evento ativo.'
-                                    : 'Visualize e acompanhe os membros cadastrados neste grupo.'}
+                                ${canSetFunction
+                                    ? 'Gerencie os membros do grupo, adicione novos integrantes, edite nome/CPF e defina funções (Obreiro, Secretário(a), Respo Assistente).'
+                                    : canManageMembers
+                                        ? 'Adicione novos membros ao grupo e altere nome ou CPF dos integrantes.'
+                                        : 'Visualize e acompanhe os membros cadastrados neste grupo.'}
                             </p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -1741,23 +1875,57 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             ${members.map(m => {
                                 const isPresent = activeEvent ? Boolean(db.memberAttendance?.[activeEvent.id]?.[m.id]) : false;
+                                const canDeleteThisMember = canDeleteMembers && m.id !== db.session.id && m.role !== 'admin_geral';
+                                const canEditThisMemberBasic = canManageMembers && m.role !== 'admin_geral' && (isAdminGeral || m.role !== 'admin_grupo');
+                                const canEditFunctionForMember = canSetFunction && m.role !== 'admin_geral' && m.role !== 'admin_grupo';
+                                const roleLabel = getMemberFunctionLabel(m.role);
+                                const roleBadgeStyle = isMemberWithSpecialFunction(m.role)
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    : 'bg-indigo-50 text-indigo-700';
+
                                 return `
                                     <div class="bg-white p-5 rounded-2xl shadow-xs border ${isPresent ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} flex flex-col justify-between gap-4">
-                                        <div class="flex items-center space-x-3 min-w-0">
-                                            <div class="h-12 w-12 ${isPresent ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'} font-bold rounded-xl flex items-center justify-center text-lg uppercase shrink-0">
-                                                ${m.username.substring(0,2)}
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex items-center space-x-3 min-w-0 flex-1">
+                                                <div class="h-12 w-12 ${isPresent ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'} font-bold rounded-xl flex items-center justify-center text-lg uppercase shrink-0">
+                                                    ${m.username.substring(0,2)}
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <h4 class="font-bold text-slate-800 break-words leading-snug">${m.username}</h4>
+                                                    ${canManageMembers && m.cpf ? `<p class="text-[11px] font-mono text-slate-400 mt-0.5">${formatCpf(m.cpf)}</p>` : ''}
+                                                    <span class="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold ${roleBadgeStyle} rounded-md">
+                                                        ${roleLabel}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div class="min-w-0 flex-1">
-                                                <h4 class="font-bold text-slate-800 break-words leading-snug">${m.username}</h4>
-                                                <span class="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold bg-indigo-50 text-indigo-700 rounded-md">
-                                                    ${m.role === 'admin_grupo' ? 'Admin de Grupo' : 'Membro'}
-                                                </span>
+                                            <div class="flex items-center space-x-1 shrink-0">
+                                                ${canEditThisMemberBasic ? `
+                                                    <button onclick="openEditMemberBasicModal('${m.id}')" class="text-slate-400 hover:text-brand-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors" title="Alterar Nome ou CPF do membro">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                ` : ''}
+                                                ${canDeleteThisMember ? `
+                                                    <button onclick="openDeleteUserModal('${m.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="Excluir membro do grupo">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                         </div>
+                                        ${canEditFunctionForMember ? `
+                                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                                <span class="text-xs text-slate-500 font-medium">Função no grupo</span>
+                                                <select onchange="updateMemberFunctionByGroupAdmin('${m.id}', this.value)" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                                    <option value="membro" ${m.role === 'membro' ? 'selected' : ''}>Membro</option>
+                                                    <option value="obreiro" ${m.role === 'obreiro' ? 'selected' : ''}>Obreiro</option>
+                                                    <option value="secretario" ${m.role === 'secretario' ? 'selected' : ''}>Secretário(a)</option>
+                                                    <option value="respo_assistente" ${m.role === 'respo_assistente' ? 'selected' : ''}>Respo Assistente</option>
+                                                </select>
+                                            </div>
+                                        ` : ''}
                                         ${activeEvent ? `
                                             <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                                 <span class="text-xs text-slate-400 font-medium">Presença no evento</span>
-                                                ${canManageMembers ? `
+                                                ${canConfirmAttendance ? `
                                                     <button onclick="toggleMemberAttendanceByAdmin('${m.id}')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer shrink-0 ${
                                                         isPresent 
                                                             ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs' 
@@ -1889,6 +2057,7 @@
             const memberEntries = groupMembers.map(member => ({
                 id: member.id,
                 name: member.username,
+                cpf: member.cpf || '',
                 role: member.role,
                 guests: groupGuests.filter(g => g.memberId === member.id)
             }));
@@ -1952,6 +2121,7 @@
                         const totalConvidados = memberBox.guests.length;
                         const totalConfirmados = memberBox.guests.filter(g => g.rsvp === 'Confirmado').length;
                         const totalPresentes = memberBox.guests.filter(g => g.attended).length;
+                        const canEditMemberBasic = canManageGroupMembersAndGuests(db.session) && memberBox.role !== 'admin_geral' && (db.session.role === 'admin_geral' || memberBox.role !== 'admin_grupo');
 
                         return `
                             <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
@@ -1962,11 +2132,16 @@
                                             ${memberBox.name.substring(0, 2)}
                                         </div>
                                         <div>
-                                            <div class="flex items-center space-x-2">
+                                            <div class="flex flex-wrap items-center gap-2">
                                                 <h4 class="text-base font-bold text-slate-800">${memberBox.name}</h4>
-                                                <span class="px-2 py-0.5 text-[11px] font-semibold bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
-                                                    ${memberBox.role === 'admin_grupo' ? 'Admin de Grupo' : 'Membro'}
+                                                <span class="px-2 py-0.5 text-[11px] font-semibold ${isMemberWithSpecialFunction(memberBox.role) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'} rounded-md">
+                                                    ${getMemberFunctionLabel(memberBox.role)}
                                                 </span>
+                                                ${canEditMemberBasic ? `
+                                                    <button onclick="openEditMemberBasicModal('${memberBox.id}')" class="text-slate-400 hover:text-brand-600 p-1 rounded-lg hover:bg-indigo-50 transition-colors" title="Alterar Nome ou CPF deste membro">
+                                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                             <p class="text-xs text-slate-500 mt-0.5">Lista individual de convidados</p>
                                         </div>
@@ -2945,7 +3120,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h3 class="text-lg font-bold text-slate-800">Controle de Usuários e Permissões (${currentChurch.name})</h3>
-                            <p class="text-sm text-slate-500">Cadastre novos membros nos grupos desta igreja ou promova usuários a Administradores.</p>
+                            <p class="text-sm text-slate-500">Cadastre novos membros nos grupos desta igreja, atribua funções (Obreiro, Secretário(a), Respo Assistente) ou promova usuários a Administradores.</p>
                         </div>
                         <button onclick="openAddMemberModal('${defaultGroupForNew.replace(/'/g, "\\'")}', true)" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 transition-all shrink-0">
                             <i class="fa-solid fa-user-plus"></i>
@@ -2959,10 +3134,11 @@
                                 <thead>
                                     <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                         <th class="py-4 px-6">Usuário</th>
+                                        <th class="py-4 px-6">CPF</th>
                                         <th class="py-4 px-6">Igreja</th>
                                         <th class="py-4 px-6">Grupo</th>
                                         <th class="py-4 px-6">Função Atual</th>
-                                        <th class="py-4 px-6 text-right">Alterar Permissão</th>
+                                        <th class="py-4 px-6 text-right">Alterar Permissão / Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -2970,9 +3146,11 @@
                                         const uChurchId = u.churchId || DEFAULT_CHURCH_ID;
                                         const uChurchGroups = getChurchGroups(uChurchId);
                                         const groupOptions = Array.from(new Set([...uChurchGroups, u.grupo]));
+                                        const canDeleteUser = u.id !== db.session.id;
                                         return `
                                             <tr class="hover:bg-slate-50 transition-all">
                                                 <td class="py-4 px-6 font-semibold text-slate-800">${u.username}</td>
+                                                <td class="py-4 px-6 text-xs font-mono text-slate-600">${u.cpf ? formatCpf(u.cpf) : '-'}</td>
                                                 <td class="py-4 px-6">
                                                     ${u.role === 'admin_geral' ? `
                                                         <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600">Todas as Igrejas</span>
@@ -2993,16 +3171,29 @@
                                                     </select>
                                                 </td>
                                                 <td class="py-4 px-6">
-                                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                        ${u.role}
+                                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${isMemberWithSpecialFunction(u.role) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'}">
+                                                        ${getMemberFunctionLabel(u.role)}
                                                     </span>
                                                 </td>
-                                                <td class="py-4 px-6 text-right space-x-2">
-                                                    <select onchange="updateUserRole('${u.id}', this.value)" class="text-xs bg-slate-100 border border-slate-300 rounded-lg py-1 px-2 font-medium text-slate-700">
-                                                        <option value="membro" ${u.role==='membro'?'selected':''}>Membro</option>
-                                                        <option value="admin_grupo" ${u.role==='admin_grupo'?'selected':''}>Admin Grupo</option>
-                                                        <option value="admin_geral" ${u.role==='admin_geral'?'selected':''}>Admin Geral</option>
-                                                    </select>
+                                                <td class="py-4 px-6 text-right">
+                                                    <div class="inline-flex items-center justify-end space-x-2">
+                                                        <select onchange="updateUserRole('${u.id}', this.value)" class="text-xs bg-slate-100 border border-slate-300 rounded-lg py-1 px-2 font-medium text-slate-700">
+                                                            <option value="membro" ${u.role==='membro'?'selected':''}>Membro</option>
+                                                            <option value="obreiro" ${u.role==='obreiro'?'selected':''}>Obreiro</option>
+                                                            <option value="secretario" ${u.role==='secretario'?'selected':''}>Secretário(a)</option>
+                                                            <option value="respo_assistente" ${u.role==='respo_assistente'?'selected':''}>Respo Assistente</option>
+                                                            <option value="admin_grupo" ${u.role==='admin_grupo'?'selected':''}>Admin Grupo</option>
+                                                            <option value="admin_geral" ${u.role==='admin_geral'?'selected':''}>Admin Geral</option>
+                                                        </select>
+                                                        <button onclick="openEditUserModal('${u.id}')" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors" title="Editar todas as informações do usuário">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </button>
+                                                        ${canDeleteUser ? `
+                                                            <button onclick="openDeleteUserModal('${u.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="Excluir usuário">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         `;
@@ -3155,7 +3346,7 @@
                 u.username.trim().toLowerCase() === newName.toLowerCase()
             );
             if (newName !== db.session.username && duplicateInSystem) {
-                showToast('Este nome de usuário já está em uso no sistema. Escolha outro nome.', 'error');
+                showToast('Este nome já está em uso no sistema. Escolha outro nome.', 'error');
                 return;
             }
 
@@ -3231,11 +3422,18 @@
         }
 
         function openAddMemberModal(defaultGrupo = null, allowGroupSelection = false) {
+            if (!canManageGroupMembersAndGuests(db.session)) {
+                showToast('Você não tem permissão para adicionar membros.', 'error');
+                return;
+            }
             const churchId = getCurrentChurchId();
             const currentChurch = getCurrentChurch();
             const churchGroups = getChurchGroups(churchId);
             const isAdminGeral = db.session.role === 'admin_geral';
-            const targetGrupo = defaultGrupo || (db.session.role === 'admin_grupo' ? db.session.grupo : (churchGroups[0] || 'Grupo 1'));
+            const canSetFunction = canAssignMemberFunctions(db.session);
+            const targetGrupo = isAdminGeral
+                ? (defaultGrupo || churchGroups[0] || 'Grupo 1')
+                : db.session.grupo;
             const showGroupSelect = isAdminGeral && allowGroupSelection;
             const groupOptions = Array.from(new Set([...churchGroups, targetGrupo])).filter(Boolean);
 
@@ -3250,12 +3448,12 @@
                     </div>
                     <form onsubmit="handleAdminCreateMember(event, '${targetGrupo.replace(/'/g, "\\'")}', ${showGroupSelect})" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome de Usuário do Membro</label>
-                            <input id="admin-new-member-username" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Ex: pedro_silva">
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF do Membro</label>
+                            <input id="admin-new-member-cpf" type="text" inputmode="numeric" maxlength="14" required oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Senha de Acesso</label>
-                            <input id="admin-new-member-password" type="text" required value="123" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Defina uma senha inicial">
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome Completo do Membro</label>
+                            <input id="admin-new-member-username" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Ex: Pedro Silva">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Grupo (${currentChurch.name})</label>
@@ -3269,6 +3467,17 @@
                                 <input type="text" disabled value="${targetGrupo}" class="w-full px-3 py-2 border border-slate-200 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium">
                             `}
                         </div>
+                        ${canSetFunction ? `
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Função no Grupo</label>
+                                <select id="admin-new-member-role" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="membro" selected>Membro</option>
+                                    <option value="obreiro">Obreiro</option>
+                                    <option value="secretario">Secretário(a)</option>
+                                    <option value="respo_assistente">Respo Assistente</option>
+                                </select>
+                            </div>
+                        ` : ''}
                         <div class="flex justify-end space-x-3 pt-4">
                             <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
                             <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Cadastrar Membro</button>
@@ -3280,30 +3489,50 @@
 
         function handleAdminCreateMember(e, fixedGrupo, hasGroupSelect) {
             e.preventDefault();
+            if (!canManageGroupMembersAndGuests(db.session)) return;
+
             const churchId = getCurrentChurchId();
             const currentChurch = getCurrentChurch();
+            const cpfDigits = cleanCpf(document.getElementById('admin-new-member-cpf').value);
             const username = document.getElementById('admin-new-member-username').value.trim();
-            const password = document.getElementById('admin-new-member-password').value.trim();
             const grupo = hasGroupSelect
                 ? document.getElementById('admin-new-member-grupo').value
-                : (db.session.role === 'admin_grupo' ? db.session.grupo : fixedGrupo);
+                : (db.session.role === 'admin_geral' ? fixedGrupo : db.session.grupo);
 
-            if (!username || !password || !grupo) return;
+            const roleSelectEl = document.getElementById('admin-new-member-role');
+            const allowedRoles = ['membro', 'obreiro', 'secretario', 'respo_assistente'];
+            const selectedRole = (canAssignMemberFunctions(db.session) && roleSelectEl && allowedRoles.includes(roleSelectEl.value))
+                ? roleSelectEl.value
+                : 'membro';
+
+            if (cpfDigits.length !== 11) {
+                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+                document.getElementById('admin-new-member-cpf').focus();
+                return;
+            }
+            if (!username || !grupo) return;
+
+            if (findUserByCpf(cpfDigits)) {
+                showToast('Este CPF já está cadastrado no sistema.', 'error');
+                document.getElementById('admin-new-member-cpf').focus();
+                return;
+            }
 
             const duplicateInSystem = db.users.some(u =>
                 u.username.trim().toLowerCase() === username.toLowerCase()
             );
             if (duplicateInSystem) {
-                showToast('Este nome de usuário já está em uso no sistema. Escolha outro nome.', 'error');
+                showToast('Este nome já está em uso no sistema. Escolha outro nome.', 'error');
                 document.getElementById('admin-new-member-username').focus();
                 return;
             }
 
             const newUser = {
                 id: 'u_' + Date.now(),
+                cpf: cpfDigits,
                 username,
-                password,
-                role: 'membro',
+                password: '123',
+                role: selectedRole,
                 churchId,
                 grupo
             };
@@ -3311,16 +3540,129 @@
             db.users.push(newUser);
             saveDB();
             closeModal();
-            showToast(`Membro "${username}" adicionado ao ${grupo} (${currentChurch.name})!`);
+            showToast(`Membro "${username}" (${getMemberFunctionLabel(selectedRole)}) adicionado ao ${grupo} (${currentChurch.name})!`);
             renderContent();
         }
 
+        function openEditMemberBasicModal(memberId) {
+            if (!canManageGroupMembersAndGuests(db.session)) {
+                showToast('Você não tem permissão para alterar dados de membros.', 'error');
+                return;
+            }
+
+            const churchId = getCurrentChurchId();
+            const member = getChurchUsers(churchId).find(u => u.id === memberId);
+            if (!member || member.role === 'admin_geral') return;
+
+            if (db.session.role !== 'admin_geral') {
+                if (member.grupo !== db.session.grupo || member.role === 'admin_grupo') {
+                    showToast('Você só pode editar Nome e CPF de membros do seu próprio grupo.', 'error');
+                    return;
+                }
+            }
+
+            const safeName = (member.username || '').replace(/"/g, '&quot;');
+
+            openModal(`
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Editar Nome e CPF do Membro</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Grupo: <span class="font-semibold text-slate-700">${member.grupo}</span> • Função: <span class="font-semibold text-slate-700">${getMemberFunctionLabel(member.role)}</span></p>
+                        </div>
+                        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form onsubmit="handleUpdateMemberNameAndCpf(event, '${member.id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome Completo</label>
+                            <input id="edit-member-basic-name" type="text" required value="${safeName}" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Nome completo do membro">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF</label>
+                            <input id="edit-member-basic-cpf" type="text" inputmode="numeric" maxlength="14" required value="${member.cpf ? formatCpf(member.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
+                        </div>
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            `);
+        }
+
+        function handleUpdateMemberNameAndCpf(e, memberId) {
+            e.preventDefault();
+            if (!canManageGroupMembersAndGuests(db.session)) return;
+
+            const churchId = getCurrentChurchId();
+            const member = getChurchUsers(churchId).find(u => u.id === memberId);
+            if (!member || member.role === 'admin_geral') return;
+
+            if (db.session.role !== 'admin_geral') {
+                if (member.grupo !== db.session.grupo || member.role === 'admin_grupo') {
+                    return;
+                }
+            }
+
+            const newName = document.getElementById('edit-member-basic-name').value.trim();
+            const newCpfDigits = cleanCpf(document.getElementById('edit-member-basic-cpf').value);
+
+            if (!newName) {
+                showToast('Informe o nome completo do membro.', 'error');
+                return;
+            }
+            if (newCpfDigits.length !== 11) {
+                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+                document.getElementById('edit-member-basic-cpf').focus();
+                return;
+            }
+
+            const duplicateCpf = db.users.some(u => u.id !== memberId && cleanCpf(u.cpf) === newCpfDigits);
+            if (duplicateCpf) {
+                showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
+                document.getElementById('edit-member-basic-cpf').focus();
+                return;
+            }
+
+            const duplicateName = db.users.some(u =>
+                u.id !== memberId &&
+                u.username.trim().toLowerCase() === newName.toLowerCase()
+            );
+            if (duplicateName) {
+                showToast('Já existe outro usuário cadastrado com este nome.', 'error');
+                document.getElementById('edit-member-basic-name').focus();
+                return;
+            }
+
+            member.username = newName;
+            member.cpf = newCpfDigits;
+
+            db.guests.forEach(g => {
+                if (g.memberId === memberId) {
+                    g.memberName = newName;
+                }
+            });
+
+            if (db.session.id === memberId) {
+                db.session = normalizeUserFields({ ...member });
+            }
+
+            saveDB();
+            closeModal();
+            showToast(`Dados de "${newName}" atualizados com sucesso!`);
+            renderApp();
+        }
+
         function openAddGuestForMemberModal(preselectedMemberId = null, targetGrupo = null) {
+            if (!canManageGroupMembersAndGuests(db.session)) {
+                showToast('Você não tem permissão para adicionar convidados para membros.', 'error');
+                return;
+            }
             const churchId = getCurrentChurchId();
             const currentChurch = getCurrentChurch();
-            const grupoName = db.session.role === 'admin_grupo'
-                ? db.session.grupo
-                : (targetGrupo || getChurchGroups(churchId)[0] || 'Grupo 1');
+            const grupoName = db.session.role === 'admin_geral'
+                ? (targetGrupo || getChurchGroups(churchId)[0] || 'Grupo 1')
+                : db.session.grupo;
             const groupMembers = getChurchUsers(churchId)
                 .filter(u => u.grupo === grupoName && u.role !== 'admin_geral')
                 .sort((a, b) => a.username.localeCompare(b.username, 'pt-BR', { sensitivity: 'base' }));
@@ -3342,7 +3684,7 @@
                             <select id="admin-guest-member-id" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                                 ${groupMembers.map(m => `
                                     <option value="${m.id}" ${m.id === preselectedMemberId ? 'selected' : ''}>
-                                        ${m.username} (${m.role === 'admin_grupo' ? 'Admin de Grupo' : 'Membro'})
+                                        ${m.username} (${getMemberFunctionLabel(m.role)})
                                     </option>
                                 `).join('')}
                             </select>
@@ -3374,6 +3716,7 @@
 
         function handleAdminCreateGuestForMember(e, grupoName) {
             e.preventDefault();
+            if (!canManageGroupMembersAndGuests(db.session)) return;
             const churchId = getCurrentChurchId();
             const memberId = document.getElementById('admin-guest-member-id').value;
             const name = document.getElementById('admin-guest-name').value.trim();
@@ -3383,7 +3726,7 @@
             const member = getChurchUsers(churchId).find(u => u.id === memberId);
             if (!member || !name) return;
 
-            const effectiveGrupo = db.session.role === 'admin_grupo' ? db.session.grupo : (member.grupo || grupoName);
+            const effectiveGrupo = db.session.role === 'admin_geral' ? (member.grupo || grupoName) : db.session.grupo;
 
             const newGuest = {
                 id: 'g_' + Date.now(),
@@ -3413,7 +3756,7 @@
             const guest = db.guests.find(g => g.id === guestId);
             if (!guest) return;
 
-            const isMember = db.session.role === 'membro';
+            const isMember = isRegularMemberOrFunctionRole(db.session.role);
             const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
             const canEditRsvp = !isMember || eventRules.canRsvp;
             const canEditCheckin = !isMember || eventRules.canCheckin;
@@ -3484,7 +3827,7 @@
             guest.name = newName;
             guest.obs = newObs;
 
-            const isMember = db.session.role === 'membro';
+            const isMember = isRegularMemberOrFunctionRole(db.session.role);
             const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
             if (!isMember || eventRules.canRsvp) {
                 guest.rsvp = newRsvp;
@@ -3505,7 +3848,7 @@
             const guest = db.guests.find(g => g.id === id);
             if (!guest) return;
 
-            if (db.session.role === 'membro') {
+            if (isRegularMemberOrFunctionRole(db.session.role)) {
                 const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
                 if (!eventRules.canRsvp) {
                     showToast(`Ação bloqueada: ${eventRules.rsvpReason}.`, 'error');
@@ -3525,7 +3868,7 @@
             const guest = db.guests.find(g => g.id === id);
             if (!guest) return;
 
-            if (db.session.role === 'membro') {
+            if (isRegularMemberOrFunctionRole(db.session.role)) {
                 const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
                 if (!eventRules.canCheckin) {
                     showToast(`Ação bloqueada: ${eventRules.checkinReason}.`, 'error');
@@ -3545,7 +3888,7 @@
             const guest = db.guests.find(g => g.id === id);
             if (!guest) return;
 
-            if (db.session.role === 'membro') {
+            if (isRegularMemberOrFunctionRole(db.session.role)) {
                 const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
                 if (!eventRules.canCheckin) {
                     showToast(`Ação bloqueada: ${eventRules.checkinReason}.`, 'error');
@@ -3608,6 +3951,257 @@
                 showToast('Grupo do usuário atualizado!');
                 renderContent();
             }
+        }
+
+        function populateEditUserGroupSelect(selectedGrupo = '') {
+            const churchSelect = document.getElementById('edit-user-church');
+            const groupSelect = document.getElementById('edit-user-group');
+            const roleSelect = document.getElementById('edit-user-role');
+            if (!churchSelect || !groupSelect) return;
+
+            const selectedChurchId = churchSelect.value;
+            const churchGroups = getChurchGroups(selectedChurchId);
+            const isGeralRole = roleSelect && roleSelect.value === 'admin_geral';
+            const options = Array.from(new Set([
+                ...churchGroups,
+                ...(selectedGrupo ? [selectedGrupo] : []),
+                ...(isGeralRole ? ['Geral'] : [])
+            ])).filter(Boolean);
+
+            if (options.length === 0) {
+                groupSelect.innerHTML = `<option value="Grupo 1">Grupo 1</option>`;
+            } else {
+                groupSelect.innerHTML = options.map(grp => `
+                    <option value="${grp}" ${grp === selectedGrupo ? 'selected' : ''}>${grp}</option>
+                `).join('');
+            }
+        }
+
+        function openEditUserModal(userId) {
+            if (!db.session || db.session.role !== 'admin_geral') {
+                showToast('Apenas o Admin Geral pode editar todas as informações de um usuário.', 'error');
+                return;
+            }
+            const user = db.users.find(u => u.id === userId);
+            if (!user) return;
+
+            const userChurchId = user.churchId || DEFAULT_CHURCH_ID;
+            const safeName = (user.username || '').replace(/"/g, '&quot;');
+            const safePassword = (user.password || '123').replace(/"/g, '&quot;');
+            const safeGroup = (user.grupo || '').replace(/'/g, "\\'");
+
+            openModal(`
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Editar Usuário</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Altere qualquer dado cadastral, igreja, grupo ou função deste usuário.</p>
+                        </div>
+                        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form onsubmit="handleAdminUpdateUser(event, '${user.id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome Completo</label>
+                            <input id="edit-user-username" type="text" required value="${safeName}" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Nome completo">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF</label>
+                                <input id="edit-user-cpf" type="text" inputmode="numeric" maxlength="14" required value="${user.cpf ? formatCpf(user.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Senha</label>
+                                <input id="edit-user-password" type="text" required value="${safePassword}" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Senha de acesso">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Igreja</label>
+                            <select id="edit-user-church" onchange="populateEditUserGroupSelect()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                ${db.churches.map(c => `
+                                    <option value="${c.id}" ${c.id === userChurchId ? 'selected' : ''}>${c.name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Grupo</label>
+                                <select id="edit-user-group" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Função / Cargo</label>
+                                <select id="edit-user-role" onchange="populateEditUserGroupSelect(document.getElementById('edit-user-group').value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="membro" ${user.role === 'membro' ? 'selected' : ''}>Membro</option>
+                                    <option value="obreiro" ${user.role === 'obreiro' ? 'selected' : ''}>Obreiro</option>
+                                    <option value="secretario" ${user.role === 'secretario' ? 'selected' : ''}>Secretário(a)</option>
+                                    <option value="respo_assistente" ${user.role === 'respo_assistente' ? 'selected' : ''}>Respo Assistente</option>
+                                    <option value="admin_grupo" ${user.role === 'admin_grupo' ? 'selected' : ''}>Admin Grupo</option>
+                                    <option value="admin_geral" ${user.role === 'admin_geral' ? 'selected' : ''}>Admin Geral</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            `);
+
+            populateEditUserGroupSelect(user.grupo);
+        }
+
+        function handleAdminUpdateUser(e, userId) {
+            e.preventDefault();
+            if (!db.session || db.session.role !== 'admin_geral') return;
+
+            const user = db.users.find(u => u.id === userId);
+            if (!user) return;
+
+            const newUsername = document.getElementById('edit-user-username').value.trim();
+            const newCpfDigits = cleanCpf(document.getElementById('edit-user-cpf').value);
+            const newPassword = document.getElementById('edit-user-password').value.trim();
+            const newChurchId = document.getElementById('edit-user-church').value;
+            const newGroup = document.getElementById('edit-user-group').value;
+            const newRole = document.getElementById('edit-user-role').value;
+
+            if (!newUsername) {
+                showToast('Informe o nome completo do usuário.', 'error');
+                return;
+            }
+            if (newCpfDigits.length !== 11) {
+                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+                document.getElementById('edit-user-cpf').focus();
+                return;
+            }
+            if (!newPassword) {
+                showToast('Informe a senha do usuário.', 'error');
+                return;
+            }
+
+            const duplicateCpf = db.users.some(u => u.id !== userId && cleanCpf(u.cpf) === newCpfDigits);
+            if (duplicateCpf) {
+                showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
+                document.getElementById('edit-user-cpf').focus();
+                return;
+            }
+
+            const duplicateName = db.users.some(u =>
+                u.id !== userId &&
+                u.username.trim().toLowerCase() === newUsername.toLowerCase()
+            );
+            if (duplicateName) {
+                showToast('Já existe outro usuário cadastrado com este nome.', 'error');
+                document.getElementById('edit-user-username').focus();
+                return;
+            }
+
+            user.username = newUsername;
+            user.cpf = newCpfDigits;
+            user.password = newPassword;
+            user.churchId = newChurchId;
+            user.grupo = newGroup;
+            user.role = newRole;
+
+            db.guests.forEach(g => {
+                if (g.memberId === userId) {
+                    g.memberName = newUsername;
+                    g.churchId = newChurchId;
+                    g.grupo = newGroup;
+                }
+            });
+
+            if (db.session.id === userId) {
+                db.session = normalizeUserFields({ ...user });
+            }
+
+            saveDB();
+            closeModal();
+            showToast(`Informações de "${newUsername}" atualizadas com sucesso!`);
+            renderApp();
+        }
+
+        function openDeleteUserModal(userId) {
+            if (!db.session) return;
+            const targetUser = db.users.find(u => u.id === userId);
+            if (!targetUser) return;
+
+            if (targetUser.id === db.session.id) {
+                showToast('Você não pode excluir sua própria conta logada.', 'error');
+                return;
+            }
+
+            const isAdminGeral = db.session.role === 'admin_geral';
+            const isAdminGrupo = db.session.role === 'admin_grupo';
+
+            if (!isAdminGeral && !isAdminGrupo) {
+                showToast('Sem permissão para excluir usuários.', 'error');
+                return;
+            }
+
+            if (isAdminGrupo) {
+                const sameChurch = (targetUser.churchId || DEFAULT_CHURCH_ID) === (db.session.churchId || DEFAULT_CHURCH_ID);
+                if (!sameChurch || targetUser.grupo !== db.session.grupo || targetUser.role === 'admin_geral') {
+                    showToast('Você só pode excluir membros do seu próprio grupo.', 'error');
+                    return;
+                }
+            }
+
+            const userGuestsCount = db.guests.filter(g => g.memberId === targetUser.id).length;
+
+            openModal(`
+                <div class="p-6">
+                    <div class="flex items-center space-x-3 text-rose-600 mb-3">
+                        <div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user-xmark"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800">Excluir Usuário</h3>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-2">
+                        Tem certeza que deseja excluir <span class="font-bold text-slate-800">${targetUser.username}</span> (${targetUser.grupo})?
+                    </p>
+                    <p class="text-xs text-slate-500 mb-6 bg-rose-50/70 border border-rose-100 rounded-xl p-3">
+                        Esta ação também removerá <strong>${userGuestsCount} convidado(s)</strong> vinculados a este usuário e seus registros de presença em eventos.
+                    </p>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
+                        <button type="button" onclick="confirmDeleteUser('${targetUser.id}')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-md">Confirmar Exclusão</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function confirmDeleteUser(userId) {
+            if (!db.session) return;
+            const targetUser = db.users.find(u => u.id === userId);
+            if (!targetUser || targetUser.id === db.session.id) return;
+
+            const isAdminGeral = db.session.role === 'admin_geral';
+            const isAdminGrupo = db.session.role === 'admin_grupo';
+
+            if (!isAdminGeral && !isAdminGrupo) return;
+
+            if (isAdminGrupo) {
+                const sameChurch = (targetUser.churchId || DEFAULT_CHURCH_ID) === (db.session.churchId || DEFAULT_CHURCH_ID);
+                if (!sameChurch || targetUser.grupo !== db.session.grupo || targetUser.role === 'admin_geral') {
+                    return;
+                }
+            }
+
+            db.users = db.users.filter(u => u.id !== userId);
+            db.guests = db.guests.filter(g => g.memberId !== userId);
+
+            if (db.memberAttendance && typeof db.memberAttendance === 'object') {
+                Object.keys(db.memberAttendance).forEach(eventId => {
+                    if (db.memberAttendance[eventId] && Object.prototype.hasOwnProperty.call(db.memberAttendance[eventId], userId)) {
+                        delete db.memberAttendance[eventId][userId];
+                    }
+                });
+            }
+
+            saveDB();
+            closeModal();
+            showToast(`Usuário "${targetUser.username}" excluído com sucesso.`);
+            renderApp();
         }
 
         function toggleSelfAttendance() {
@@ -3775,7 +4369,7 @@
                     }
                 });
                 target.status = 'Ativo';
-                showToast(`Evento "${target.title}" ativado!`);
+                showToast(`Evento "${target.title}" definido como ativo!`);
             } else {
                 target.status = 'Planejado';
                 showToast(`Evento "${target.title}" desativado.`, 'info');
@@ -3797,10 +4391,10 @@
                         </div>
                         <h3 class="text-lg font-bold text-slate-800">Excluir Evento</h3>
                     </div>
-                    <p class="text-sm text-slate-600 mb-6">Deseja realmente excluir o evento <span class="font-bold text-slate-800">${target.title}</span>?</p>
+                    <p class="text-sm text-slate-600 mb-6">Tem certeza que deseja excluir o evento <span class="font-bold text-slate-800">${target.title}</span>?</p>
                     <div class="flex justify-end space-x-3">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
-                        <button type="button" onclick="confirmDeleteEvent('${target.id}')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-md">Excluir Evento</button>
+                        <button type="button" onclick="confirmDeleteEvent('${target.id}')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-md">Excluir</button>
                     </div>
                 </div>
             `);
@@ -3808,17 +4402,17 @@
 
         function confirmDeleteEvent(eventId) {
             db.events = db.events.filter(ev => ev.id !== eventId);
-            if (db.memberAttendance && db.memberAttendance[eventId]) {
+            if (db.memberAttendance[eventId]) {
                 delete db.memberAttendance[eventId];
             }
             saveDB();
             closeModal();
-            showToast('Evento excluído com sucesso.');
+            showToast('Evento excluído.');
             renderApp();
         }
 
-        // --- INIT ON LOAD ---
-        window.onload = function() {
+        // --- BOOT APP ---
+        window.onload = () => {
             initDatabase();
         };
     </script>
