@@ -2104,6 +2104,16 @@
                 if (memberGuestsSortOrder === 'menos_convidados') {
                     return a.guests.length - b.guests.length || a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
                 }
+                if (memberGuestsSortOrder === 'menos_confirmacoes') {
+                    const confA = a.guests.filter(g => g.rsvp === 'Confirmado').length;
+                    const confB = b.guests.filter(g => g.rsvp === 'Confirmado').length;
+                    return confA - confB || a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
+                }
+                if (memberGuestsSortOrder === 'menos_convites_enviados') {
+                    const sentA = a.guests.filter(g => Boolean(g.inviteSent)).length;
+                    const sentB = b.guests.filter(g => Boolean(g.inviteSent)).length;
+                    return sentA - sentB || a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
+                }
                 return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
             });
 
@@ -2131,6 +2141,7 @@
                 <div class="space-y-6">
                     ${allMemberBoxes.map(memberBox => {
                         const totalConvidados = memberBox.guests.length;
+                        const totalConvitesEnviados = memberBox.guests.filter(g => Boolean(g.inviteSent)).length;
                         const totalConfirmados = memberBox.guests.filter(g => g.rsvp === 'Confirmado').length;
                         const totalPresentes = memberBox.guests.filter(g => g.attended).length;
                         const canEditMemberBasic = canManageGroupMembersAndGuests(db.session) && memberBox.role !== 'admin_geral' && (db.session.role === 'admin_geral' || memberBox.role !== 'admin_grupo');
@@ -2161,10 +2172,14 @@
 
                                     <!-- Indicadores do Membro e Ação -->
                                     <div class="flex flex-wrap items-center gap-3">
-                                        <div class="grid grid-cols-3 gap-3 sm:w-auto">
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:w-auto">
                                             <div class="bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-center min-w-[100px]">
                                                 <span class="block text-[11px] font-semibold uppercase text-slate-400">Total Convidados</span>
                                                 <span class="text-lg font-black text-slate-800">${totalConvidados}</span>
+                                            </div>
+                                            <div class="bg-indigo-50/70 px-4 py-2.5 rounded-xl border border-indigo-200 text-center min-w-[100px]">
+                                                <span class="block text-[11px] font-semibold uppercase text-indigo-600">Convites Enviados</span>
+                                                <span class="text-lg font-black text-indigo-700">${totalConvitesEnviados}</span>
                                             </div>
                                             <div class="bg-blue-50/70 px-4 py-2.5 rounded-xl border border-blue-200 text-center min-w-[100px]">
                                                 <span class="block text-[11px] font-semibold uppercase text-blue-600">Confirmados</span>
@@ -2288,6 +2303,8 @@
                                     <option value="alfabetica" ${memberGuestsSortOrder === 'alfabetica' ? 'selected' : ''}>Organizar: Ordem alfabética (A-Z)</option>
                                     <option value="mais_convidados" ${memberGuestsSortOrder === 'mais_convidados' ? 'selected' : ''}>Organizar: Membros com mais convidados</option>
                                     <option value="menos_convidados" ${memberGuestsSortOrder === 'menos_convidados' ? 'selected' : ''}>Organizar: Membros com menos convidados</option>
+                                    <option value="menos_confirmacoes" ${memberGuestsSortOrder === 'menos_confirmacoes' ? 'selected' : ''}>Organizar: Membros com menos confirmações</option>
+                                    <option value="menos_convites_enviados" ${memberGuestsSortOrder === 'menos_convites_enviados' ? 'selected' : ''}>Organizar: Membros com menos convites enviados</option>
                                 </select>
                             </div>
                         </div>
