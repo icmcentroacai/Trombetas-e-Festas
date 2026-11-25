@@ -598,11 +598,11 @@
         ];
 
         const DEFAULT_GUESTS = [
-            { id: 'g1', churchId: DEFAULT_CHURCH_ID, memberId: 'u4', memberName: 'membro1', grupo: 'Grupo 1', name: 'Carlos Silva', obs: 'Convidado do trabalho', inviteSent: true, rsvp: 'Confirmado', attended: true, acceptsVisit: 'Sim', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Presente' },
-            { id: 'g2', churchId: DEFAULT_CHURCH_ID, memberId: 'u4', memberName: 'membro1', grupo: 'Grupo 1', name: 'Ana Souza', obs: 'Vizinha', inviteSent: true, rsvp: 'Confirmado', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Confirmado' },
-            { id: 'g3', churchId: DEFAULT_CHURCH_ID, memberId: 'u6', memberName: 'joao_g1', grupo: 'Grupo 1', name: 'Roberto Dias', obs: 'Familiar', inviteSent: false, rsvp: 'Pendente', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Pendente' },
-            { id: 'g4', churchId: DEFAULT_CHURCH_ID, memberId: 'u5', memberName: 'membro2', grupo: 'Grupo 2', name: 'Juliana Lima', obs: 'Amiga da escola', inviteSent: true, rsvp: 'Confirmado', attended: true, acceptsVisit: 'Sim', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Presente' },
-            { id: 'g5', churchId: DEFAULT_CHURCH_ID, memberId: 'u7', memberName: 'maria_g2', grupo: 'Grupo 2', name: 'Marcos Paulo', obs: 'Convidado para o louvor', inviteSent: false, rsvp: 'Confirmado', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Confirmado' }
+            { id: 'g1', churchId: DEFAULT_CHURCH_ID, memberId: 'u4', memberName: 'membro1', grupo: 'Grupo 1', name: 'Carlos Silva', obs: 'Convidado do trabalho', inviteSent: true, needsTransport: false, rsvp: 'Confirmado', attended: true, acceptsVisit: 'Sim', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Presente' },
+            { id: 'g2', churchId: DEFAULT_CHURCH_ID, memberId: 'u4', memberName: 'membro1', grupo: 'Grupo 1', name: 'Ana Souza', obs: 'Vizinha', inviteSent: true, needsTransport: false, rsvp: 'Confirmado', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Confirmado' },
+            { id: 'g3', churchId: DEFAULT_CHURCH_ID, memberId: 'u6', memberName: 'joao_g1', grupo: 'Grupo 1', name: 'Roberto Dias', obs: 'Familiar', inviteSent: false, needsTransport: false, rsvp: 'Pendente', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Pendente' },
+            { id: 'g4', churchId: DEFAULT_CHURCH_ID, memberId: 'u5', memberName: 'membro2', grupo: 'Grupo 2', name: 'Juliana Lima', obs: 'Amiga da escola', inviteSent: true, needsTransport: false, rsvp: 'Confirmado', attended: true, acceptsVisit: 'Sim', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Presente' },
+            { id: 'g5', churchId: DEFAULT_CHURCH_ID, memberId: 'u7', memberName: 'maria_g2', grupo: 'Grupo 2', name: 'Marcos Paulo', obs: 'Convidado para o louvor', inviteSent: false, needsTransport: false, rsvp: 'Confirmado', attended: false, acceptsVisit: 'Pendente', visitStatus: 'Pendente', visitDate: '', visitNotes: '', status: 'Confirmado' }
         ];
 
         // --- CPF HELPERS ---
@@ -707,6 +707,9 @@
             }
             if (typeof guest.inviteSent !== 'boolean') {
                 guest.inviteSent = false;
+            }
+            if (typeof guest.needsTransport !== 'boolean') {
+                guest.needsTransport = false;
             }
             if (!guest.rsvp) {
                 if (guest.status === 'Confirmado' || guest.status === 'Presente') guest.rsvp = 'Confirmado';
@@ -1233,6 +1236,7 @@
                     { id: 'dashboard-completo', label: 'Dashboard Completo', icon: 'fa-chart-line' },
                     { id: 'meus-convidados', label: 'Meus Convidados', icon: 'fa-address-book' },
                     { id: 'convidados-membro', label: 'Convidados por Membro', icon: 'fa-list-check' },
+                    { id: 'convidados-transporte', label: 'Convidados que precisam de transporte', icon: 'fa-van-shuttle' },
                     { id: 'controle-visitas', label: 'Controle de Visitas', icon: 'fa-house-chimney-user' },
                     { id: 'membros-grupo', label: 'Membros do Grupo', icon: 'fa-users' }
                 ];
@@ -1248,6 +1252,7 @@
                     { id: 'dashboard-geral', label: 'Dashboard Geral', icon: 'fa-chart-column' },
                     { id: 'meus-convidados', label: 'Meus Convidados', icon: 'fa-address-book' },
                     ...groupLinks,
+                    { id: 'convidados-transporte', label: 'Convidados que precisam de transporte', icon: 'fa-van-shuttle' },
                     { id: 'controle-visitas', label: 'Controle de Visitas', icon: 'fa-house-chimney-user' },
                     { id: 'membros-grupo', label: 'Membros do Grupo', icon: 'fa-users' },
                     { id: 'gerenciar-igrejas', label: 'Igrejas & Grupos', icon: 'fa-church' },
@@ -1321,6 +1326,12 @@
                 case 'convidados-membro':
                     pageTitle.textContent = `Convidados por Membro (${db.session.grupo})`;
                     renderConvidadosPorMembro(mainContent);
+                    break;
+                case 'convidados-transporte':
+                    pageTitle.textContent = db.session.role === 'admin_geral'
+                        ? `Convidados que Precisam de Transporte - ${currentChurch.name}`
+                        : `Convidados que Precisam de Transporte (${db.session.grupo})`;
+                    renderConvidadosTransporte(mainContent);
                     break;
                 case 'controle-visitas':
                     pageTitle.textContent = db.session.role === 'admin_geral'
@@ -1586,6 +1597,7 @@
                                         <th class="py-4 px-6">Nome do Convidado</th>
                                         <th class="py-4 px-6">Observação</th>
                                         <th class="py-4 px-6">Convite Enviado</th>
+                                        <th class="py-4 px-6">Precisa de Transporte</th>
                                         <th class="py-4 px-6">Confirmação Prévia (RSVP)</th>
                                         <th class="py-4 px-6">Presença no Evento</th>
                                         <th class="py-4 px-6">Aceita Visita no Lar</th>
@@ -1595,7 +1607,7 @@
                                 <tbody class="divide-y divide-slate-100 text-sm">
                                     ${myGuests.length === 0 ? `
                                         <tr>
-                                            <td colspan="7" class="text-center py-12 text-slate-400">
+                                            <td colspan="8" class="text-center py-12 text-slate-400">
                                                 <i class="fa-solid fa-address-book text-3xl mb-2 text-slate-300"></i>
                                                 <p>Nenhum convidado cadastrado ainda.</p>
                                             </td>
@@ -1610,6 +1622,7 @@
                                         else if (g.acceptsVisit === 'Não') visitBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
 
                                         const isInviteSent = Boolean(g.inviteSent);
+                                        const isNeedsTransport = Boolean(g.needsTransport);
 
                                         return `
                                             <tr class="hover:bg-slate-50/80 transition-all">
@@ -1619,6 +1632,12 @@
                                                     <select onchange="toggleGuestInviteSent('${g.id}', this.value === 'true')" class="text-xs font-semibold rounded-lg py-1.5 px-2.5 border focus:outline-none focus:ring-2 focus:ring-brand-500 ${isInviteSent ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}">
                                                         <option value="false" ${!isInviteSent ? 'selected' : ''}>Não enviado</option>
                                                         <option value="true" ${isInviteSent ? 'selected' : ''}>Enviado</option>
+                                                    </select>
+                                                </td>
+                                                <td class="py-4 px-6">
+                                                    <select onchange="toggleGuestNeedsTransport('${g.id}', this.value === 'true')" class="text-xs font-semibold rounded-lg py-1.5 px-2.5 border focus:outline-none focus:ring-2 focus:ring-brand-500 ${isNeedsTransport ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-600 border-slate-200'}">
+                                                        <option value="false" ${!isNeedsTransport ? 'selected' : ''}>Não</option>
+                                                        <option value="true" ${isNeedsTransport ? 'selected' : ''}>Sim</option>
                                                     </select>
                                                 </td>
                                                 <td class="py-4 px-6">
@@ -2205,6 +2224,7 @@
                                                 <th class="py-3.5 px-6">Nome do Convidado</th>
                                                 <th class="py-3.5 px-6">Observação</th>
                                                 <th class="py-3.5 px-6">Convite Enviado</th>
+                                                <th class="py-3.5 px-6">Precisa de Transporte</th>
                                                 <th class="py-3.5 px-6">Confirmação Prévia</th>
                                                 <th class="py-3.5 px-6">Presença</th>
                                                 <th class="py-3.5 px-6">Visita no Lar</th>
@@ -2214,7 +2234,7 @@
                                         <tbody class="divide-y divide-slate-100 text-sm">
                                             ${memberBox.guests.length === 0 ? `
                                                 <tr>
-                                                    <td colspan="7" class="text-center py-8 text-slate-400 text-xs">
+                                                    <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
                                                         Nenhum convidado cadastrado por este membro ainda.
                                                     </td>
                                                 </tr>
@@ -2226,6 +2246,12 @@
                                                         <select onchange="toggleGuestInviteSent('${g.id}', this.value === 'true')" class="text-xs font-semibold rounded-lg py-1 px-2.5 border focus:outline-none focus:ring-2 focus:ring-brand-500 ${g.inviteSent ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}">
                                                             <option value="false" ${!g.inviteSent ? 'selected' : ''}>Não enviado</option>
                                                             <option value="true" ${g.inviteSent ? 'selected' : ''}>Enviado</option>
+                                                        </select>
+                                                    </td>
+                                                    <td class="py-3.5 px-6">
+                                                        <select onchange="toggleGuestNeedsTransport('${g.id}', this.value === 'true')" class="text-xs font-semibold rounded-lg py-1 px-2.5 border focus:outline-none focus:ring-2 focus:ring-brand-500 ${Boolean(g.needsTransport) ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-600 border-slate-200'}">
+                                                            <option value="false" ${!Boolean(g.needsTransport) ? 'selected' : ''}>Não</option>
+                                                            <option value="true" ${Boolean(g.needsTransport) ? 'selected' : ''}>Sim</option>
                                                         </select>
                                                     </td>
                                                     <td class="py-3.5 px-6">
@@ -2316,6 +2342,87 @@
             `;
 
             renderConvidadosPorMembroList(grupoName);
+        }
+
+        // 5A. CONVIDADOS QUE PRECISAM DE TRANSPORTE (Admin Grupo / Admin Geral)
+        function renderConvidadosTransporte(container) {
+            const churchId = getCurrentChurchId();
+            const currentChurch = getCurrentChurch();
+            const isAdminGeral = db.session.role === 'admin_geral';
+            const churchGuests = getChurchGuests(churchId);
+            const userGroup = String(db.session.grupo || '').trim();
+
+            const transportGuests = isAdminGeral
+                ? churchGuests.filter(g => Boolean(g.needsTransport) === true)
+                : churchGuests.filter(g => {
+                    const guestOwner = db.users.find(u => u.id === g.memberId);
+                    const effectiveGuestGroup = String(g.grupo || (guestOwner && guestOwner.grupo) || '').trim();
+                    return Boolean(g.needsTransport) === true && effectiveGuestGroup === userGroup;
+                });
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">
+                                ${isAdminGeral
+                                    ? `Convidados que Precisam de Transporte (${currentChurch.name})`
+                                    : `Convidados que Precisam de Transporte (${userGroup})`}
+                            </h3>
+                            <p class="text-sm text-slate-500">
+                                ${isAdminGeral
+                                    ? 'Lista de convidados da igreja que solicitaram transporte para o evento e o membro responsável pelo convite.'
+                                    : `Lista restrita aos convidados do ${userGroup} que solicitaram transporte para o evento.`}
+                            </p>
+                        </div>
+                        <span class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
+                            <i class="fa-solid fa-van-shuttle"></i>
+                            <span>Total: ${transportGuests.length} convidado(s)</span>
+                        </span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-4 px-6">Nome do Convidado</th>
+                                        <th class="py-4 px-6">Convidado Por</th>
+                                        ${isAdminGeral ? '<th class="py-4 px-6">Grupo</th>' : ''}
+                                        <th class="py-4 px-6">Observação</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    ${transportGuests.length === 0 ? `
+                                        <tr>
+                                            <td colspan="${isAdminGeral ? 4 : 3}" class="text-center py-12 text-slate-400">
+                                                <i class="fa-solid fa-van-shuttle text-3xl mb-2 text-slate-300"></i>
+                                                <p>Nenhum convidado solicitou transporte até o momento.</p>
+                                            </td>
+                                        </tr>
+                                    ` : transportGuests.map(g => `
+                                        <tr class="hover:bg-slate-50/80 transition-all">
+                                            <td class="py-4 px-6 font-bold text-slate-800">${g.name}</td>
+                                            <td class="py-4 px-6">
+                                                <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
+                                                    <i class="fa-solid fa-user text-[10px] text-slate-400"></i>
+                                                    <span>${g.memberName}</span>
+                                                </span>
+                                            </td>
+                                            ${isAdminGeral ? `
+                                                <td class="py-4 px-6">
+                                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">${g.grupo}</span>
+                                                </td>
+                                            ` : ''}
+                                            <td class="py-4 px-6 text-slate-600">${g.obs || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // 5B. CONTROLE DE VISITAS (Admin Grupo / Admin Geral - Isolado por igreja)
@@ -3425,6 +3532,13 @@
                                 <option value="true">Já enviado</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Precisa de transporte?</label>
+                            <select id="guest-needs-transport" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="false" selected>Não</option>
+                                <option value="true">Sim</option>
+                            </select>
+                        </div>
                         <div class="flex justify-end space-x-3 pt-4">
                             <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
                             <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Salvar Convidado</button>
@@ -3439,6 +3553,7 @@
             const name = document.getElementById('guest-name').value.trim();
             const obs = document.getElementById('guest-obs').value.trim();
             const inviteSent = document.getElementById('guest-invite-sent').value === 'true';
+            const needsTransport = document.getElementById('guest-needs-transport').value === 'true';
             const churchId = getCurrentChurchId();
 
             const newGuest = {
@@ -3450,6 +3565,7 @@
                 name,
                 obs,
                 inviteSent,
+                needsTransport,
                 rsvp: 'Pendente',
                 attended: false,
                 acceptsVisit: 'Pendente',
@@ -3750,6 +3866,13 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Precisa de transporte?</label>
+                            <select id="admin-guest-needs-transport" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="false" selected>Não</option>
+                                <option value="true">Sim</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Confirmação Prévia (RSVP)</label>
                             <select id="admin-guest-rsvp" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                                 <option value="Pendente" selected>Pendente</option>
@@ -3774,6 +3897,7 @@
             const name = document.getElementById('admin-guest-name').value.trim();
             const obs = document.getElementById('admin-guest-obs').value.trim();
             const inviteSent = document.getElementById('admin-guest-invite-sent').value === 'true';
+            const needsTransport = document.getElementById('admin-guest-needs-transport').value === 'true';
             const rsvp = document.getElementById('admin-guest-rsvp').value;
 
             const member = getChurchUsers(churchId).find(u => u.id === memberId);
@@ -3790,6 +3914,7 @@
                 name,
                 obs,
                 inviteSent,
+                needsTransport,
                 rsvp,
                 attended: false,
                 acceptsVisit: 'Pendente',
@@ -3815,6 +3940,7 @@
             const canEditRsvp = !isMember || eventRules.canRsvp;
             const canEditCheckin = !isMember || eventRules.canCheckin;
             const isInviteSent = Boolean(guest.inviteSent);
+            const isNeedsTransport = Boolean(guest.needsTransport);
 
             openModal(`
                 <div class="p-6">
@@ -3836,6 +3962,13 @@
                             <select id="edit-guest-invite-sent" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                                 <option value="false" ${!isInviteSent ? 'selected' : ''}>Não enviado</option>
                                 <option value="true" ${isInviteSent ? 'selected' : ''}>Já enviado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Precisa de transporte?</label>
+                            <select id="edit-guest-needs-transport" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="false" ${!isNeedsTransport ? 'selected' : ''}>Não</option>
+                                <option value="true" ${isNeedsTransport ? 'selected' : ''}>Sim</option>
                             </select>
                         </div>
                         <div>
@@ -3881,6 +4014,7 @@
             const newName = document.getElementById('edit-guest-name').value.trim();
             const newObs = document.getElementById('edit-guest-obs').value.trim();
             const newInviteSent = document.getElementById('edit-guest-invite-sent').value === 'true';
+            const newNeedsTransport = document.getElementById('edit-guest-needs-transport').value === 'true';
             const newRsvp = document.getElementById('edit-guest-rsvp').value;
             const newAttended = document.getElementById('edit-guest-attended').checked;
             const newVisit = document.getElementById('edit-guest-visit').value;
@@ -3890,6 +4024,7 @@
             guest.name = newName;
             guest.obs = newObs;
             guest.inviteSent = newInviteSent;
+            guest.needsTransport = newNeedsTransport;
 
             const isMember = isRegularMemberOrFunctionRole(db.session.role);
             const eventRules = getMemberEventPermissions(guest.churchId || getCurrentChurchId());
@@ -3915,6 +4050,16 @@
             guest.inviteSent = Boolean(isSent);
             saveDB();
             showToast(guest.inviteSent ? 'Convite marcado como enviado!' : 'Status do convite alterado para não enviado.');
+            renderContent();
+        }
+
+        function toggleGuestNeedsTransport(id, needsTransport) {
+            const guest = db.guests.find(g => g.id === id);
+            if (!guest) return;
+
+            guest.needsTransport = Boolean(needsTransport);
+            saveDB();
+            showToast(guest.needsTransport ? 'Marcado que o convidado precisa de transporte!' : 'Marcado que o convidado não precisa de transporte.');
             renderContent();
         }
 
@@ -4195,49 +4340,48 @@
         }
 
         function openDeleteUserModal(userId) {
-            if (!db.session) return;
+            if (!db.session || (db.session.role !== 'admin_grupo' && db.session.role !== 'admin_geral')) {
+                showToast('Você não tem permissão para excluir usuários.', 'error');
+                return;
+            }
             const targetUser = db.users.find(u => u.id === userId);
             if (!targetUser) return;
 
             if (targetUser.id === db.session.id) {
-                showToast('Você não pode excluir sua própria conta logada.', 'error');
+                showToast('Você não pode excluir sua própria conta enquanto está logado.', 'error');
                 return;
             }
 
-            const isAdminGeral = db.session.role === 'admin_geral';
-            const isAdminGrupo = db.session.role === 'admin_grupo';
-
-            if (!isAdminGeral && !isAdminGrupo) {
-                showToast('Sem permissão para excluir usuários.', 'error');
-                return;
-            }
-
-            if (isAdminGrupo) {
-                const sameChurch = (targetUser.churchId || DEFAULT_CHURCH_ID) === (db.session.churchId || DEFAULT_CHURCH_ID);
-                if (!sameChurch || targetUser.grupo !== db.session.grupo || targetUser.role === 'admin_geral') {
+            if (db.session.role === 'admin_grupo') {
+                if (targetUser.role === 'admin_geral' || targetUser.grupo !== db.session.grupo || (targetUser.churchId || DEFAULT_CHURCH_ID) !== getCurrentChurchId()) {
                     showToast('Você só pode excluir membros do seu próprio grupo.', 'error');
                     return;
                 }
             }
 
-            const userGuestsCount = db.guests.filter(g => g.memberId === targetUser.id).length;
+            const userGuestsCount = db.guests.filter(g => g.memberId === userId).length;
 
             openModal(`
                 <div class="p-6">
-                    <div class="flex items-center space-x-3 text-rose-600 mb-3">
-                        <div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-user-xmark"></i>
+                    <div class="flex items-start space-x-3.5 mb-4">
+                        <div class="h-11 w-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800">Excluir Usuário</h3>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-slate-800">Excluir Usuário</h3>
+                            <p class="text-sm text-slate-600 mt-1">
+                                Tem certeza que deseja excluir <strong class="text-slate-800">${targetUser.username}</strong> (${targetUser.grupo})?
+                            </p>
+                            ${userGuestsCount > 0 ? `
+                                <p class="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 mt-2.5">
+                                    <i class="fa-solid fa-circle-info mr-1"></i>
+                                    Atenção: Este membro possui <strong>${userGuestsCount}</strong> convidado(s) vinculado(s) que também serão removidos.
+                                </p>
+                            ` : ''}
+                        </div>
                     </div>
-                    <p class="text-sm text-slate-600 mb-2">
-                        Tem certeza que deseja excluir <span class="font-bold text-slate-800">${targetUser.username}</span> (${targetUser.grupo})?
-                    </p>
-                    <p class="text-xs text-slate-500 mb-6 bg-rose-50/70 border border-rose-100 rounded-xl p-3">
-                        Esta ação também removerá <strong>${userGuestsCount} convidado(s)</strong> vinculados a este usuário e seus registros de presença em eventos.
-                    </p>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
                         <button type="button" onclick="confirmDeleteUser('${targetUser.id}')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-md">Confirmar Exclusão</button>
                     </div>
                 </div>
@@ -4245,100 +4389,77 @@
         }
 
         function confirmDeleteUser(userId) {
-            if (!db.session) return;
+            if (!db.session || (db.session.role !== 'admin_grupo' && db.session.role !== 'admin_geral')) return;
             const targetUser = db.users.find(u => u.id === userId);
-            if (!targetUser || targetUser.id === db.session.id) return;
+            if (!targetUser || targetUser.id === db.session.id) {
+                closeModal();
+                return;
+            }
 
-            const isAdminGeral = db.session.role === 'admin_geral';
-            const isAdminGrupo = db.session.role === 'admin_grupo';
-
-            if (!isAdminGeral && !isAdminGrupo) return;
-
-            if (isAdminGrupo) {
-                const sameChurch = (targetUser.churchId || DEFAULT_CHURCH_ID) === (db.session.churchId || DEFAULT_CHURCH_ID);
-                if (!sameChurch || targetUser.grupo !== db.session.grupo || targetUser.role === 'admin_geral') {
+            if (db.session.role === 'admin_grupo') {
+                if (targetUser.role === 'admin_geral' || targetUser.grupo !== db.session.grupo || (targetUser.churchId || DEFAULT_CHURCH_ID) !== getCurrentChurchId()) {
+                    closeModal();
+                    showToast('Permissão negada para excluir este usuário.', 'error');
                     return;
                 }
             }
 
-            db.users = db.users.filter(u => u.id !== userId);
+            const deletedName = targetUser.username;
+
             db.guests = db.guests.filter(g => g.memberId !== userId);
 
-            if (db.memberAttendance && typeof db.memberAttendance === 'object') {
-                Object.keys(db.memberAttendance).forEach(eventId => {
-                    if (db.memberAttendance[eventId] && Object.prototype.hasOwnProperty.call(db.memberAttendance[eventId], userId)) {
-                        delete db.memberAttendance[eventId][userId];
+            if (db.memberAttendance) {
+                Object.keys(db.memberAttendance).forEach(evId => {
+                    if (db.memberAttendance[evId] && Object.prototype.hasOwnProperty.call(db.memberAttendance[evId], userId)) {
+                        delete db.memberAttendance[evId][userId];
                     }
                 });
             }
 
+            db.users = db.users.filter(u => u.id !== userId);
+
             saveDB();
             closeModal();
-            showToast(`Usuário "${targetUser.username}" excluído com sucesso.`);
-            renderApp();
+            showToast(`Usuário "${deletedName}" excluído com sucesso.`, 'info');
+            renderContent();
+        }
+
+        function deleteGuest(id) {
+            db.guests = db.guests.filter(g => g.id !== id);
+            saveDB();
+            showToast('Convidado removido.', 'info');
+            renderContent();
         }
 
         function toggleSelfAttendance() {
             const churchId = getCurrentChurchId();
-            const activeEvent = getActiveChurchEvent(churchId);
-            if (!activeEvent) {
-                showToast('Nenhum evento ativo nesta igreja no momento.', 'error');
-                return;
-            }
             const eventRules = getMemberEventPermissions(churchId);
             if (!eventRules.canCheckin) {
                 showToast(`Ação bloqueada: ${eventRules.checkinReason}.`, 'error');
                 return;
             }
+            const activeEvent = getActiveChurchEvent(churchId);
+            if (!activeEvent) {
+                showToast('Nenhum evento ativo nesta igreja no momento.', 'error');
+                return;
+            }
             if (!db.memberAttendance[activeEvent.id]) {
                 db.memberAttendance[activeEvent.id] = {};
             }
-            const current = Boolean(db.memberAttendance[activeEvent.id][db.session.id]);
-            db.memberAttendance[activeEvent.id][db.session.id] = !current;
+            const currentStatus = Boolean(db.memberAttendance[activeEvent.id][db.session.id]);
+            db.memberAttendance[activeEvent.id][db.session.id] = !currentStatus;
             saveDB();
-            showToast(!current ? 'Sua presença foi confirmada!' : 'Sua confirmação de presença foi desmarcada.');
-            renderContent();
-        }
-
-        function deleteGuest(guestId) {
-            const guest = db.guests.find(g => g.id === guestId);
-            if (!guest) return;
-
-            openModal(`
-                <div class="p-6">
-                    <div class="flex items-center space-x-3 text-rose-600 mb-3">
-                        <div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-800">Excluir Convidado</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 mb-6">Tem certeza que deseja remover <span class="font-bold text-slate-800">${guest.name}</span> da sua lista de convidados?</p>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
-                        <button type="button" onclick="confirmDeleteGuest('${guest.id}')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-md">Excluir</button>
-                    </div>
-                </div>
-            `);
-        }
-
-        function confirmDeleteGuest(guestId) {
-            db.guests = db.guests.filter(g => g.id !== guestId);
-            saveDB();
-            closeModal();
-            showToast('Convidado removido da lista.');
+            showToast(!currentStatus ? 'Sua presença no evento foi confirmada!' : 'Sua confirmação de presença foi removida.');
             renderContent();
         }
 
         function openAddEventModal() {
-            const today = getTodayLocalDate();
             const currentChurch = getCurrentChurch();
-            const isAdminGeral = db.session && db.session.role === 'admin_geral';
-
             openModal(`
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800">Cadastrar Novo Evento</h3>
+                            <h3 class="text-lg font-bold text-slate-800">Criar Novo Evento</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Igreja selecionada: <span class="font-semibold text-slate-700">${currentChurch.name}</span></p>
                         </div>
                         <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
@@ -4346,30 +4467,28 @@
                     <form onsubmit="handleCreateEvent(event)" class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome do Evento</label>
-                            <input id="event-title" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Ex: Culto Especial de Famílias">
+                            <input id="ev-title" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Ex: Culto Especial de Missões">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Data do Evento</label>
-                            <input id="event-date" type="date" required value="${today}" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Data</label>
+                            <input id="ev-date" type="date" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Descrição (Opcional)</label>
-                            <textarea id="event-desc" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Detalhes do evento..."></textarea>
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Descrição</label>
+                            <textarea id="ev-desc" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Detalhes do evento..."></textarea>
                         </div>
-                        ${isAdminGeral ? `
-                            <div class="pt-1">
-                                <label class="inline-flex items-start space-x-2.5 p-3 rounded-xl border border-indigo-200 bg-indigo-50/70 w-full cursor-pointer">
-                                    <input id="event-all-churches" type="checkbox" class="mt-0.5 rounded text-brand-600 focus:ring-brand-500 h-4 w-4">
-                                    <div class="text-xs">
-                                        <span class="font-bold text-indigo-900 block">Evento para Todas as Igrejas</span>
-                                        <span class="text-indigo-700">Cria e ativa este evento simultaneamente em todas as ${db.churches.length} igreja(s) cadastradas.</span>
-                                    </div>
-                                </label>
-                            </div>
-                        ` : ''}
+                        <div class="pt-1">
+                            <label class="inline-flex items-start space-x-2.5 p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/70 text-slate-700 cursor-pointer w-full">
+                                <input id="ev-all-churches" type="checkbox" class="rounded text-brand-600 focus:ring-brand-500 h-4 w-4 mt-0.5 shrink-0">
+                                <span class="text-xs leading-relaxed">
+                                    <strong class="block text-slate-800 text-sm">Evento para todas as igrejas</strong>
+                                    Cria e ativa automaticamente este mesmo evento em todas as igrejas cadastradas no sistema (${db.churches.length} igreja(s)).
+                                </span>
+                            </label>
+                        </div>
                         <div class="flex justify-end space-x-3 pt-4">
                             <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
-                            <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Salvar e Ativar</button>
+                            <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md">Salvar Evento</button>
                         </div>
                     </form>
                 </div>
@@ -4378,98 +4497,93 @@
 
         function handleCreateEvent(e) {
             e.preventDefault();
-            const title = document.getElementById('event-title').value.trim();
-            const date = document.getElementById('event-date').value;
-            const description = document.getElementById('event-desc').value.trim();
-            const applyToAllChurches = Boolean(document.getElementById('event-all-churches')?.checked);
             const churchId = getCurrentChurchId();
-            const currentChurch = getCurrentChurch();
+            const title = document.getElementById('ev-title').value.trim();
+            const date = document.getElementById('ev-date').value;
+            const description = document.getElementById('ev-desc').value.trim();
+            const applyToAllChurches = Boolean(document.getElementById('ev-all-churches')?.checked);
 
-            if (!title || !date) return;
+            if (applyToAllChurches) {
+                const targetChurches = db.churches.length > 0 ? db.churches : DEFAULT_CHURCHES;
+                const sharedGroupId = 'ev_shared_' + Date.now();
 
-            if (applyToAllChurches && db.session && db.session.role === 'admin_geral') {
-                const targetChurches = db.churches.length > 0 ? db.churches : [currentChurch];
-                const batchTimestamp = Date.now();
+                db.events.forEach(ev => {
+                    ev.status = 'Planejado';
+                });
 
                 targetChurches.forEach((church, idx) => {
-                    db.events.forEach(ev => {
-                        if ((ev.churchId || DEFAULT_CHURCH_ID) === church.id && ev.status === 'Ativo') {
-                            ev.status = 'Planejado';
-                        }
-                    });
-
-                    db.events.unshift({
-                        id: `e_${batchTimestamp}_${idx}_${church.id}`,
+                    db.events.push({
+                        id: `ev_${Date.now()}_${idx}`,
+                        sharedGroupId,
                         churchId: church.id,
+                        allChurches: true,
                         title,
                         date,
                         description,
-                        status: 'Ativo',
-                        allChurches: true
+                        status: 'Ativo'
                     });
                 });
 
                 saveDB();
                 closeModal();
-                showToast(`Evento "${title}" criado e ativado para todas as ${targetChurches.length} igreja(s)!`);
+                showToast(`Evento "${title}" criado e ativado para todas as ${targetChurches.length} igrejas!`);
                 renderApp();
                 return;
             }
 
-            // Desativa outros eventos apenas da igreja atual (mantém isolamento entre igrejas)
             db.events.forEach(ev => {
-                if ((ev.churchId || DEFAULT_CHURCH_ID) === churchId && ev.status === 'Ativo') {
+                if ((ev.churchId || DEFAULT_CHURCH_ID) === churchId) {
                     ev.status = 'Planejado';
                 }
             });
 
-            const newEvent = {
-                id: 'e_' + Date.now(),
+            const newEv = {
+                id: 'ev_' + Date.now(),
                 churchId,
+                allChurches: false,
                 title,
                 date,
                 description,
-                status: 'Ativo',
-                allChurches: false
+                status: 'Ativo'
             };
 
-            db.events.unshift(newEvent);
+            db.events.push(newEv);
             saveDB();
             closeModal();
-            showToast(`Evento "${title}" criado e ativado para ${currentChurch.name}!`);
+            showToast('Evento criado e ativado para esta igreja!');
             renderApp();
         }
 
-        function toggleEventStatus(eventId) {
-            const target = db.events.find(ev => ev.id === eventId);
-            if (!target) return;
-            const targetChurchId = target.churchId || getCurrentChurchId();
+        function toggleEventStatus(id) {
+            const ev = db.events.find(e => e.id === id);
+            if (!ev) return;
 
-            if (target.status === 'Ativo') {
-                target.status = 'Planejado';
-                showToast('Evento desativado.');
+            const evChurchId = ev.churchId || DEFAULT_CHURCH_ID;
+
+            if (ev.status === 'Ativo') {
+                ev.status = 'Planejado';
             } else {
-                db.events.forEach(ev => {
-                    if ((ev.churchId || DEFAULT_CHURCH_ID) === targetChurchId && ev.status === 'Ativo') {
-                        ev.status = 'Planejado';
+                db.events.forEach(item => {
+                    if ((item.churchId || DEFAULT_CHURCH_ID) === evChurchId) {
+                        item.status = 'Planejado';
                     }
                 });
-                target.status = 'Ativo';
-                showToast(`Evento "${target.title}" definido como Ativo!`);
+                ev.status = 'Ativo';
             }
 
             saveDB();
+            showToast(`Status do evento alterado para ${ev.status}`);
             renderApp();
         }
 
-        function deleteEvent(eventId) {
-            db.events = db.events.filter(ev => ev.id !== eventId);
+        function deleteEvent(id) {
+            db.events = db.events.filter(e => e.id !== id);
             saveDB();
-            showToast('Evento removido.');
+            showToast('Evento excluído.', 'info');
             renderApp();
         }
 
-        // --- INIT APP ---
+        // --- START APPLICATION ---
         window.addEventListener('DOMContentLoaded', () => {
             initDatabase();
         });
