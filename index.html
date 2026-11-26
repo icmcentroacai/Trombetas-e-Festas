@@ -1923,7 +1923,11 @@
                                                 </div>
                                                 <div class="min-w-0 flex-1">
                                                     <h4 class="font-bold text-slate-800 break-words leading-snug">${m.username}</h4>
-                                                    ${canManageMembers && m.cpf ? `<p class="text-[11px] font-mono text-slate-400 mt-0.5">${formatCpf(m.cpf)}</p>` : ''}
+                                                    ${canManageMembers ? (
+                                                        m.cpf
+                                                            ? `<p class="text-[11px] font-mono text-slate-400 mt-0.5">${formatCpf(m.cpf)}</p>`
+                                                            : `<p class="text-[11px] text-amber-600/90 mt-0.5 font-medium"><i class="fa-solid fa-user-slash text-[10px] mr-1"></i>Sem CPF (sem login)</p>`
+                                                    ) : ''}
                                                     <span class="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold ${roleBadgeStyle} rounded-md">
                                                         ${roleLabel}
                                                     </span>
@@ -3609,8 +3613,8 @@
                     </div>
                     <form onsubmit="handleAdminCreateMember(event, '${targetGrupo.replace(/'/g, "\\'")}', ${showGroupSelect})" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF do Membro</label>
-                            <input id="admin-new-member-cpf" type="text" inputmode="numeric" maxlength="14" required oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF do Membro <span class="normal-case font-normal text-slate-400">(Opcional — sem CPF não terá login)</span></label>
+                            <input id="admin-new-member-cpf" type="text" inputmode="numeric" maxlength="14" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00 (opcional)">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome Completo do Membro</label>
@@ -3666,14 +3670,14 @@
                 ? roleSelectEl.value
                 : 'membro';
 
-            if (cpfDigits.length !== 11) {
-                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+            if (cpfDigits.length > 0 && cpfDigits.length !== 11) {
+                showToast('Se informado, o CPF deve conter 11 dígitos.', 'error');
                 document.getElementById('admin-new-member-cpf').focus();
                 return;
             }
             if (!username || !grupo) return;
 
-            if (findUserByCpf(cpfDigits)) {
+            if (cpfDigits.length === 11 && findUserByCpf(cpfDigits)) {
                 showToast('Este CPF já está cadastrado no sistema.', 'error');
                 document.getElementById('admin-new-member-cpf').focus();
                 return;
@@ -3701,7 +3705,8 @@
             db.users.push(newUser);
             saveDB();
             closeModal();
-            showToast(`Membro "${username}" (${getMemberFunctionLabel(selectedRole)}) adicionado ao ${grupo} (${currentChurch.name})!`);
+            const loginInfo = cpfDigits ? '' : ' (sem login no site)';
+            showToast(`Membro "${username}" (${getMemberFunctionLabel(selectedRole)}) adicionado ao ${grupo} (${currentChurch.name})${loginInfo}!`);
             renderContent();
         }
 
@@ -3739,8 +3744,8 @@
                             <input id="edit-member-basic-name" type="text" required value="${safeName}" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Nome completo do membro">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF</label>
-                            <input id="edit-member-basic-cpf" type="text" inputmode="numeric" maxlength="14" required value="${member.cpf ? formatCpf(member.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
+                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF <span class="normal-case font-normal text-slate-400">(Opcional — preencha para liberar login)</span></label>
+                            <input id="edit-member-basic-cpf" type="text" inputmode="numeric" maxlength="14" value="${member.cpf ? formatCpf(member.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00 (opcional)">
                         </div>
                         <div class="flex justify-end space-x-3 pt-4">
                             <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Cancelar</button>
@@ -3772,17 +3777,19 @@
                 showToast('Informe o nome completo do membro.', 'error');
                 return;
             }
-            if (newCpfDigits.length !== 11) {
-                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+            if (newCpfDigits.length > 0 && newCpfDigits.length !== 11) {
+                showToast('Se informado, o CPF deve conter 11 dígitos.', 'error');
                 document.getElementById('edit-member-basic-cpf').focus();
                 return;
             }
 
-            const duplicateCpf = db.users.some(u => u.id !== memberId && cleanCpf(u.cpf) === newCpfDigits);
-            if (duplicateCpf) {
-                showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
-                document.getElementById('edit-member-basic-cpf').focus();
-                return;
+            if (newCpfDigits.length === 11) {
+                const duplicateCpf = db.users.some(u => u.id !== memberId && cleanCpf(u.cpf) === newCpfDigits);
+                if (duplicateCpf) {
+                    showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
+                    document.getElementById('edit-member-basic-cpf').focus();
+                    return;
+                }
             }
 
             const duplicateName = db.users.some(u =>
@@ -4225,8 +4232,8 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF</label>
-                                <input id="edit-user-cpf" type="text" inputmode="numeric" maxlength="14" required value="${user.cpf ? formatCpf(user.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00">
+                                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">CPF <span class="normal-case font-normal text-slate-400">(Opcional)</span></label>
+                                <input id="edit-user-cpf" type="text" inputmode="numeric" maxlength="14" value="${user.cpf ? formatCpf(user.cpf) : ''}" oninput="this.value = formatCpf(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="000.000.000-00 (opcional)">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Senha</label>
@@ -4287,8 +4294,8 @@
                 showToast('Informe o nome completo do usuário.', 'error');
                 return;
             }
-            if (newCpfDigits.length !== 11) {
-                showToast('Informe um CPF válido com 11 dígitos.', 'error');
+            if (newCpfDigits.length > 0 && newCpfDigits.length !== 11) {
+                showToast('Se informado, o CPF deve conter 11 dígitos.', 'error');
                 document.getElementById('edit-user-cpf').focus();
                 return;
             }
@@ -4297,11 +4304,13 @@
                 return;
             }
 
-            const duplicateCpf = db.users.some(u => u.id !== userId && cleanCpf(u.cpf) === newCpfDigits);
-            if (duplicateCpf) {
-                showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
-                document.getElementById('edit-user-cpf').focus();
-                return;
+            if (newCpfDigits.length === 11) {
+                const duplicateCpf = db.users.some(u => u.id !== userId && cleanCpf(u.cpf) === newCpfDigits);
+                if (duplicateCpf) {
+                    showToast('Já existe outro usuário cadastrado com este CPF.', 'error');
+                    document.getElementById('edit-user-cpf').focus();
+                    return;
+                }
             }
 
             const duplicateName = db.users.some(u =>
